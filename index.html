@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Zhuo Market — Marketplace</title>
+<style>
+:root{
+  --bg:#08080a;
+  --bg-elev:#0e0e11;
+  --glass: rgba(255,255,255,0.045);
+  --glass-brd: rgba(255,255,255,0.08);
+  --red:#ff1338;
+  --red-2:#ff4d63;
+  --red-dim:#4a0813;
+  --text:#f5f5f7;
+  --muted:#8f8f98;
+  --muted-2:#5c5c66;
+  --gold:#ffcf5c;
+  --green:#3ddc84;
+  --radius:20px;
+  --radius-sm:14px;
+  font-size:16px;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(255,19,56,0.14), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(255,19,56,0.08), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+::-webkit-scrollbar{display:none;}
+*{scrollbar-width:none;}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+input,select,textarea{font-family:inherit; color:var(--text); background:none; border:none; outline:none;}
+h1,h2,h3,h4{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800; letter-spacing:-0.02em;}
+
+.hidden{display:none !important;}
+
+/* ---------- shared bits ---------- */
+.glass{
+  background:var(--glass);
+  border:1px solid var(--glass-brd);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.pill{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 12px; border-radius:100px; font-size:12px; font-weight:600;
+}
+.btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:15px 20px; border-radius:14px; font-weight:700; font-size:15px;
+  transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{
+  background:linear-gradient(135deg, var(--red), #c40023);
+  color:#fff;
+  box-shadow: 0 8px 24px -6px rgba(255,19,56,0.55), 0 0 0 1px rgba(255,255,255,0.06) inset;
+}
+.btn-primary:hover{box-shadow: 0 10px 32px -4px rgba(255,19,56,0.75), 0 0 0 1px rgba(255,255,255,0.08) inset;}
+.btn-ghost{
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text);
+}
+.btn-outline-red{
+  background:rgba(255,19,56,0.08); border:1px solid rgba(255,19,56,0.4); color:var(--red-2);
+}
+.btn-sm{padding:9px 14px; border-radius:10px; font-size:13px;}
+.input-wrap{
+  display:flex; align-items:center; gap:10px;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09);
+  border-radius:14px; padding:14px 16px; transition:border-color .15s;
+}
+.input-wrap:focus-within{border-color:rgba(255,19,56,0.55); box-shadow:0 0 0 3px rgba(255,19,56,0.12);}
+.input-wrap input{flex:1; font-size:14.5px;}
+.input-wrap input::placeholder{color:var(--muted-2);}
+.field-label{font-size:12px; font-weight:600; color:var(--muted); margin-bottom:8px; display:block; text-transform:uppercase; letter-spacing:0.05em;}
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:var(--radius);
+}
+.badge-premium{
+  background:linear-gradient(135deg, var(--gold), #c99a2e);
+  color:#1a1200; font-weight:800; font-size:10px; padding:3px 8px; border-radius:100px;
+  letter-spacing:0.03em;
+}
+.toast-wrap{position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; width:min(92%,380px);}
+.toast{
+  padding:13px 16px; border-radius:14px; font-size:13.5px; font-weight:600;
+  background:rgba(15,15,18,0.92); border:1px solid rgba(255,255,255,0.12);
+  backdrop-filter:blur(14px);
+  display:flex; align-items:center; gap:10px;
+  animation: slideDown .25s ease;
+  box-shadow:0 12px 30px -6px rgba(0,0,0,0.6);
+}
+@keyframes slideDown{from{opacity:0; transform:translateY(-14px);} to{opacity:1; transform:translateY(0);}}
+.dot-red{width:8px;height:8px;border-radius:50%;background:var(--red); box-shadow:0 0 8px var(--red); flex-shrink:0;}
+
+/* ---------- skeleton ---------- */
+.skel{background:linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.04) 63%); background-size:400% 100%; animation:shimmer 1.4s infinite;}
+@keyframes shimmer{0%{background-position:100% 0;}100%{background-position:0 0;}}
+
+/* ---------- boot / splash ---------- */
+#splash{
+  position:fixed; inset:0; z-index:99999; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+}
+.splash-logo{
+  width:78px; height:78px; border-radius:22px;
+  background:linear-gradient(135deg, var(--red), #7a0016);
+  display:flex; align-items:center; justify-content:center;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800; font-weight:800; font-size:30px; color:#fff;
+  box-shadow:0 0 60px rgba(255,19,56,0.55);
+  animation:pulseLogo 1.6s ease-in-out infinite;
+}
+@keyframes pulseLogo{0%,100%{box-shadow:0 0 40px rgba(255,19,56,0.4);}50%{box-shadow:0 0 70px rgba(255,19,56,0.75);}}
+.splash-text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800; font-weight:700; font-size:15px; letter-spacing:0.08em; color:var(--muted);}
+
+/* ---------- auth ---------- */
+#auth-screen{min-height:100vh; display:flex; flex-direction:column; padding:48px 24px 32px; max-width:460px; margin:0 auto;}
+.auth-logo-row{display:flex; align-items:center; gap:12px; margin-bottom:40px;}
+.auth-logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--red),#7a0016); display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800;font-weight:800;font-size:17px;box-shadow:0 6px 20px rgba(255,19,56,0.4);}
+.auth-brand{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800; font-weight:700; font-size:15px;}
+.auth-brand small{display:block; font-size:10.5px; color:var(--muted); font-weight:500; letter-spacing:0.06em; text-transform:uppercase; margin-top:1px;}
+.auth-tabs{display:flex; gap:4px; background:rgba(255,255,255,0.04); padding:4px; border-radius:14px; margin-bottom:28px; border:1px solid rgba(255,255,255,0.06);}
+.auth-tab{flex:1; text-align:center; padding:11px; border-radius:10px; font-size:13.5px; font-weight:700; color:var(--muted); transition:all .2s;}
+.auth-tab.active{background:linear-gradient(135deg,var(--red),#c40023); color:#fff; box-shadow:0 6px 18px -4px rgba(255,19,56,0.5);}
+.auth-title{font-size:26px; font-weight:800; margin-bottom:6px;}
+.auth-sub{color:var(--muted); font-size:13.5px; margin-bottom:26px;}
+.auth-field{margin-bottom:16px;}
+.auth-forgot{display:block; text-align:right; font-size:12.5px; color:var(--red-2); font-weight:600; margin:-6px 0 20px;}
+.auth-divider{display:flex; align-items:center; gap:12px; margin:22px 0; color:var(--muted-2); font-size:12px; font-weight:600;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.08);}
+.auth-switch{text-align:center; margin-top:22px; font-size:13px; color:var(--muted);}
+.auth-switch b{color:var(--red-2); font-weight:700;}
+.verify-badge{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:14px;background:rgba(255,207,92,0.08);border:1px solid rgba(255,207,92,0.25); font-size:12.5px; color:#e8c883; margin-bottom:20px; line-height:1.5;}
+
+/* ---------- app shell ---------- */
+#app{display:none; max-width:520px; margin:0 auto; min-height:100vh; position:relative; padding-bottom:92px;}
+header.topbar{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; gap:12px; padding:16px 18px 12px;
+  background:linear-gradient(180deg, rgba(8,8,10,0.97), rgba(8,8,10,0.85));
+  backdrop-filter:blur(16px);
+}
+.topbar-logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--red),#7a0016); display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800;font-weight:800;font-size:15px; flex-shrink:0;}
+.topbar-search{flex:1;}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px; display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); position:relative; flex-shrink:0;
+}
+.icon-btn .badge-dot{position:absolute; top:6px; right:7px; width:8px;height:8px;border-radius:50%;background:var(--red); box-shadow:0 0 6px var(--red);}
+
+.view{padding:4px 18px 18px; animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.section-head{display:flex; align-items:center; justify-content:space-between; margin:22px 0 14px;}
+.section-head h3{font-size:17px; font-weight:700;}
+.section-head .see-all{font-size:12px; color:var(--red-2); font-weight:700;}
+
+.hscroll{display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; scroll-snap-type:x mandatory;}
+.chip-row{display:flex; gap:9px; overflow-x:auto; padding:2px 0 6px;}
+.chip{
+  flex-shrink:0; padding:9px 16px; border-radius:100px; font-size:12.5px; font-weight:700;
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); color:var(--muted); white-space:nowrap;
+}
+.chip.active{background:linear-gradient(135deg,var(--red),#c40023); color:#fff; border-color:transparent; box-shadow:0 6px 16px -4px rgba(255,19,56,0.5);}
+
+.hero-banner{
+  border-radius:22px; padding:22px; position:relative; overflow:hidden; margin-bottom:6px;
+  background:linear-gradient(135deg, #1c0308, #3a0210 55%, #16050a);
+  border:1px solid rgba(255,19,56,0.25);
+}
+.hero-banner::after{content:''; position:absolute; width:220px; height:220px; background:radial-gradient(circle, rgba(255,19,56,0.45), transparent 70%); top:-90px; right:-70px;}
+.hero-eyebrow{font-size:11px; font-weight:700; color:var(--red-2); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px;}
+.hero-title{font-size:22px; font-weight:800; line-height:1.15; margin-bottom:8px; max-width:80%; position:relative;}
+.hero-sub{font-size:12.5px; color:var(--muted); margin-bottom:16px; max-width:85%; position:relative;}
+
+/* product cards */
+.pcard{
+  width:158px; flex-shrink:0; scroll-snap-align:start; border-radius:20px; overflow:hidden; cursor:pointer;
+  background:linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.012) 65%), radial-gradient(circle at 80% 0%, rgba(255,30,55,.16), transparent 45%);
+  border:1px solid rgba(255,255,255,0.08); transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 10px 28px rgba(0,0,0,.22);
+  transform-style:preserve-3d;
+}
+.pcard:hover{transform:translateY(-4px) rotateX(1deg);border-color:rgba(255,42,67,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 16px 36px rgba(0,0,0,.34), 0 0 22px rgba(255,18,48,.12);}
+.pcard:active{transform:scale(0.96);}
+.pcard-img{height:122px; position:relative; display:flex;align-items:center;justify-content:center; font-size:42px; overflow:hidden;}
+.pcard-img::after{content:'';position:absolute;inset:auto -20% -45% -20%;height:80px;background:radial-gradient(ellipse, rgba(255,35,59,.25), transparent 65%);filter:blur(10px);pointer-events:none;}
+.pcard.phone-card .pcard-img{height:152px;background:linear-gradient(145deg,#160307,#2a0710 58%,#0b0b10) !important;}
+.pcard.phone-card .pcard-img::before{content:'';position:absolute;width:66px;height:126px;border-radius:18px;background:linear-gradient(145deg,#11151b,#343943 46%,#0b0d11);border:1px solid rgba(255,255,255,.22);box-shadow:0 18px 35px rgba(0,0,0,.45), 0 0 22px rgba(255,27,56,.18);transform:perspective(260px) rotateY(-16deg) rotateZ(-4deg);}
+.pcard.phone-card .pcard-img > .phone-art{position:relative;z-index:2;width:57px;height:117px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#17253c,#0b111c 55%,#16060b);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);font-size:28px;}
+.pcard.phone-card .pcard-img > .phone-art::after{content:'';position:absolute;width:25px;height:25px;border-radius:50%;right:5px;top:8px;background:radial-gradient(circle at 35% 35%,#fff,#8b96aa 12%,#1e2734 30%,#05070a 55%);box-shadow:-11px 0 0 -4px #1e2734, -22px 0 0 -7px #1e2734;}
+.pcard.phone-card .phone-grade{position:absolute;bottom:10px;left:10px;right:10px;height:3px;border-radius:9px;background:linear-gradient(90deg,rgba(255,255,255,.02),rgba(255,35,59,.75),rgba(255,255,255,.02));filter:blur(.2px);}
+.pcard-cat-tag{position:absolute; top:8px; left:8px; font-size:9px; font-weight:800; padding:3px 7px; border-radius:100px; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); text-transform:uppercase; letter-spacing:0.04em;}
+.pcard-body{padding:11px 12px 13px;}
+.pcard-title{font-size:12.5px; font-weight:700; line-height:1.3; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.pcard-seller{font-size:10.5px; color:var(--muted-2); margin-bottom:7px;}
+.pcard-foot{display:flex; align-items:center; justify-content:space-between;}
+.pcard-price{font-size:13.5px; font-weight:800; color:var(--red-2);}
+.pcard-rating{font-size:10.5px; color:var(--gold); font-weight:700; display:flex; align-items:center; gap:3px;}
+
+.plist-item{
+  display:flex; gap:13px; padding:13px; border-radius:16px; margin-bottom:10px; cursor:pointer;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+}
+.plist-item:active{background:rgba(255,255,255,0.055);}
+.plist-thumb{width:64px; height:64px; border-radius:13px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:26px;}
+.plist-info{flex:1; min-width:0;}
+.plist-title{font-size:13.5px; font-weight:700; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.plist-meta{font-size:11px; color:var(--muted-2); margin-bottom:6px;}
+.plist-foot{display:flex; align-items:center; gap:10px;}
+
+.seller-chip{flex-shrink:0; width:88px; text-align:center; scroll-snap-align:start;}
+.seller-avatar{width:60px;height:60px;border-radius:50%; margin:0 auto 8px; display:flex;align-items:center;justify-content:center; font-weight:800; font-size:20px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800; position:relative;}
+.seller-name{font-size:11.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.seller-verified{position:absolute; bottom:-2px; right:-2px; width:18px;height:18px;border-radius:50%; background:var(--red); border:2px solid var(--bg); display:flex; align-items:center; justify-content:center; font-size:9px;}
+
+/* ---------- bottom nav ---------- */
+.bottomnav{
+  position:fixed; bottom:10px; left:50%; transform:translateX(-50%); z-index:60; width:calc(100% - 24px); max-width:488px;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:8px;
+  background:rgba(12,12,16,0.88); backdrop-filter:blur(26px); -webkit-backdrop-filter:blur(26px);
+  border:1px solid rgba(255,255,255,0.09); border-radius:22px; box-shadow:0 18px 45px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.navbtn{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:54px; font-size:10px; font-weight:800; color:var(--muted-2); padding:6px 10px; border-radius:16px; position:relative; transition:all .2s ease;}
+.navbtn.active{color:#fff; background:linear-gradient(180deg,rgba(255,19,56,.18),rgba(255,19,56,.08)); box-shadow:inset 0 0 0 1px rgba(255,77,99,.22), 0 6px 18px rgba(255,19,56,.08);}
+.navbtn .nav-ic{font-size:21px; line-height:1;}
+.navbtn.active .nav-ic{filter:drop-shadow(0 0 8px rgba(255,77,99,.45)); color:var(--red-2);}
+.nav-unread.hidden{display:none!important;}
+.nav-unread{position:absolute; top:8px; right:calc(50% - 18px); width:7px; height:7px; border-radius:50%; background:var(--red-2); box-shadow:0 0 10px rgba(255,19,56,.8);}
+
+
+/* ---------- modal / sheet ---------- */
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:200; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s;}
+.overlay.show{opacity:1; pointer-events:all;}
+.sheet{
+  width:100%; max-width:520px; max-height:92vh; overflow-y:auto; background:#0c0c0f; border-radius:26px 26px 0 0;
+  border:1px solid rgba(255,255,255,0.1); border-bottom:none;
+  transform:translateY(100%); transition:transform .32s cubic-bezier(.2,.9,.25,1);
+  padding-bottom:28px;
+}
+.overlay.show .sheet{transform:translateY(0);}
+.sheet-handle{width:38px;height:4px; border-radius:10px; background:rgba(255,255,255,0.2); margin:12px auto 4px;}
+.sheet-close{position:absolute; top:14px; right:16px; width:32px;height:32px;border-radius:50%; background:rgba(255,255,255,0.08); display:flex;align-items:center;justify-content:center; font-size:15px; z-index:5;}
+
+/* product detail */
+.pd-hero{height:220px; display:flex; align-items:center; justify-content:center; font-size:70px; position:relative; margin:6px 16px 0; border-radius:20px;}
+.pd-body{padding:18px 20px 4px;}
+.pd-cat{font-size:11px; font-weight:800; color:var(--red-2); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;}
+.pd-title{font-size:20px; font-weight:800; margin-bottom:10px; line-height:1.25;}
+.pd-meta-row{display:flex; align-items:center; gap:14px; margin-bottom:16px; font-size:12.5px; color:var(--muted);}
+.pd-seller-row{display:flex; align-items:center; gap:11px; padding:13px; border-radius:16px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.07); margin-bottom:16px;}
+.pd-price-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+.pd-price{font-size:26px; font-weight:800; color:var(--red-2);}
+.pd-desc{font-size:13.5px; line-height:1.6; color:#c9c9d1; margin-bottom:20px;}
+.review-item{padding:13px 0; border-top:1px solid rgba(255,255,255,0.06);}
+.review-head{display:flex; align-items:center; gap:9px; margin-bottom:6px;}
+.review-avatar{width:30px;height:30px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-size:12px; font-weight:700;}
+.review-stars{color:var(--gold); font-size:11px;}
+.pd-cta-bar{position:sticky; bottom:0; display:flex; gap:10px; padding:14px 20px 6px; background:linear-gradient(180deg, transparent, #0c0c0f 30%);}
+
+/* admin */
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.stat-card{padding:16px; border-radius:16px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.07);}
+.stat-label{font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;}
+.stat-value{font-size:21px; font-weight:800; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800;}
+.stat-delta{font-size:11px; font-weight:700; margin-top:4px;}
+.up{color:var(--green);} .down{color:var(--red-2);}
+.bars{display:flex; align-items:flex-end; gap:7px; height:110px; padding:10px 4px 0;}
+.bar{flex:1; border-radius:6px 6px 2px 2px; background:linear-gradient(180deg, var(--red-2), var(--red-dim)); position:relative; min-height:6px;}
+.admin-row{display:flex; align-items:center; gap:12px; padding:12px; border-radius:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); margin-bottom:9px;}
+.admin-tabs{display:flex; gap:6px; overflow-x:auto; margin-bottom:16px;}
+.status-tag{font-size:10px; font-weight:800; padding:4px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:0.03em;}
+.status-paid{background:rgba(61,220,132,0.14); color:var(--green);}
+.status-pending{background:rgba(255,207,92,0.14); color:var(--gold);}
+.status-banned{background:rgba(255,19,56,0.15); color:var(--red-2);}
+
+/* profile */
+.profile-head{display:flex; flex-direction:column; align-items:center; text-align:center; padding:20px 0 10px;}
+.profile-avatar{width:88px;height:88px;border-radius:50%; background:linear-gradient(135deg,var(--red),#5a0011); display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:800; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800; margin-bottom:12px; box-shadow:0 0 0 4px rgba(255,19,56,0.12);}
+.profile-stats{display:flex; gap:26px; margin:16px 0 4px;}
+.profile-stat b{display:block; font-size:17px; font-weight:800; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-weight:800;}
+.profile-stat span{font-size:10.5px; color:var(--muted);}
+.menu-item{display:flex; align-items:center; gap:13px; padding:15px 4px; border-bottom:1px solid rgba(255,255,255,0.06);}
+.menu-item .mi-ic{width:36px;height:36px;border-radius:11px; background:rgba(255,255,255,0.05); display:flex;align-items:center;justify-content:center; font-size:16px;}
+.menu-item .mi-arrow{margin-left:auto; color:var(--muted-2);}
+
+.empty-state{text-align:center; padding:50px 20px; color:var(--muted);}
+.empty-state .es-ic{font-size:40px; margin-bottom:12px;}
+
+/* cart */
+.cart-item{display:flex; gap:12px; align-items:center; padding:13px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); margin-bottom:10px;}
+.qty-x{width:26px;height:26px;border-radius:8px; background:rgba(255,19,56,0.12); color:var(--red-2); display:flex;align-items:center;justify-content:center; font-size:14px; font-weight:700;}
+.summary-row{display:flex; justify-content:space-between; font-size:13.5px; color:var(--muted); margin-bottom:9px;}
+.summary-row.total{color:var(--text); font-weight:800; font-size:16px; margin-top:6px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.09);}
+
+.pay-method{display:flex; align-items:center; gap:12px; padding:14px; border-radius:15px; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.08); margin-bottom:9px;}
+.pay-method.selected{border-color:var(--red); background:rgba(255,19,56,0.07);}
+.pay-icon{width:38px;height:38px;border-radius:10px; display:flex;align-items:center;justify-content:center; font-size:17px; flex-shrink:0;}
+
+.notif-item{display:flex; gap:12px; padding:14px; border-radius:15px; margin-bottom:9px;}
+.notif-item.unread{background:rgba(255,19,56,0.05); border:1px solid rgba(255,19,56,0.18);}
+.notif-item.read{background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05);}
+.notif-ic{width:38px;height:38px;border-radius:11px; display:flex;align-items:center;justify-content:center; font-size:16px; flex-shrink:0;}
+
+.faq-item{padding:14px; border-radius:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); margin-bottom:9px; cursor:pointer;}
+.faq-q{display:flex; justify-content:space-between; align-items:center; font-size:13.5px; font-weight:700;}
+.faq-a{font-size:12.5px; color:var(--muted); margin-top:9px; line-height:1.5; display:none;}
+.faq-item.open .faq-a{display:block;}
+
+.chat-bubble{max-width:78%; padding:11px 14px; border-radius:16px; font-size:13px; margin-bottom:9px; line-height:1.45;}
+.chat-user{background:linear-gradient(135deg,var(--red),#c40023); margin-left:auto; border-bottom-right-radius:4px;}
+.chat-admin{background:rgba(255,255,255,0.07); border-bottom-left-radius:4px;}
+
+.vip-glow{background:linear-gradient(135deg, rgba(255,207,92,0.12), rgba(255,19,56,0.08)); border:1px solid rgba(255,207,92,0.3) !important;}
+@media (min-width:521px){ body{background-attachment:fixed;} }
+
+
+/* ===== ZHUO MARKET 2.0 — APPLE / LIQUID GLASS MOBILE SKIN ===== */
+:root{--apple-blue:#69a8ff;--apple-purple:#9f7cff;--apple-cyan:#66e7ff;--apple-pink:#ff7ad9;}
+body::before,body::after{content:"";position:fixed;z-index:-2;pointer-events:none;border-radius:50%;filter:blur(80px);opacity:.42;}
+body::before{width:280px;height:280px;left:-120px;top:12%;background:radial-gradient(circle,var(--apple-purple),transparent 68%)}
+body::after{width:300px;height:300px;right:-130px;bottom:6%;background:radial-gradient(circle,var(--apple-cyan),transparent 68%)}
+body{background:radial-gradient(600px 300px at 50% -8%,rgba(255,255,255,.065),transparent 70%),radial-gradient(500px 280px at 0 70%,rgba(159,124,255,.08),transparent 72%),radial-gradient(500px 300px at 100% 35%,rgba(102,231,255,.07),transparent 72%),var(--bg)}
+header.topbar{background:linear-gradient(180deg,rgba(8,8,10,.90),rgba(8,8,10,.62));border-bottom:1px solid rgba(255,255,255,.045)}
+.hero-banner{background:radial-gradient(160px 130px at 80% 20%,rgba(105,168,255,.28),transparent 70%),radial-gradient(150px 150px at 20% 100%,rgba(159,124,255,.22),transparent 70%),linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.028));border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.apple-orbit{position:absolute;right:12px;top:14px;width:152px;height:116px;pointer-events:none}.orbit-bubble{position:absolute;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);backdrop-filter:blur(14px);box-shadow:0 8px 25px rgba(0,0,0,.25)}
+.orbit-bubble.small{width:34px;height:34px;font-size:9px}.orbit-admin{width:52px;height:52px;left:50px;top:31px;background:linear-gradient(145deg,#111827,#466da8);border:2px solid rgba(105,168,255,.65);font-size:13px;box-shadow:0 0 0 5px rgba(105,168,255,.08),0 12px 28px rgba(0,0,0,.35)}
+.orbit-admin::after{content:'✓';position:absolute;right:-4px;bottom:-1px;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#32d583;color:#06140d;font-size:10px;border:2px solid #0d0e12}.orbit-netflix{left:6px;top:6px;background:linear-gradient(145deg,#e50914,#690006)}.orbit-spotify{right:2px;top:7px;background:linear-gradient(145deg,#19d66a,#08783b)}.orbit-prime{left:4px;bottom:0;background:linear-gradient(145deg,#1da1ff,#1557b0)}.orbit-disney{right:5px;bottom:2px;background:linear-gradient(145deg,#4737e8,#14105d)}.orbit-label{position:absolute;right:4px;top:67px;font-size:8px;color:rgba(255,255,255,.48);white-space:nowrap}
+.profile-mini{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 6px;border-radius:15px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(18px);cursor:pointer}.profile-mini-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#18243b,#466da8);font-size:11px;font-weight:900;position:relative}.profile-mini-avatar::after{content:'';position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;background:#34d399;border:2px solid #101116}
+.settings-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.065)}.settings-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07)}.toggle-switch{width:46px;height:28px;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.10);position:relative;transition:.2s}.toggle-switch::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;left:2px;top:2px;background:#fff;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.3)}.toggle-switch.on{background:linear-gradient(135deg,#28d17c,#1bb765)}.toggle-switch.on::after{transform:translateX(18px)}
+.pref-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pref-choice{padding:11px;border-radius:13px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);font-size:11.5px;font-weight:700;text-align:center;cursor:pointer}.pref-choice.active{border-color:rgba(105,168,255,.7);background:rgba(105,168,255,.12)}
+.subscription-card{width:154px;min-width:154px;overflow:hidden;border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.10);cursor:pointer}.subscription-logo{height:92px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:25px}.subscription-body{padding:11px 12px 13px}.subscription-title{font-size:12.5px;font-weight:800;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.subscription-meta{font-size:10.5px;color:var(--muted)}
+@media(max-width:420px){.apple-orbit{transform:scale(.88);transform-origin:top right;right:1px;top:10px}.hero-title{max-width:72%}.hero-sub{max-width:76%}}
+
+/* ===== Zhuo Market — refined 3-tab mobile UI ===== */
+#app{padding-bottom:98px;}
+header.topbar{padding:14px 16px 12px; gap:10px;}
+.topbar-logo{width:40px;height:40px;border-radius:13px; box-shadow:0 8px 22px rgba(255,19,56,.22), inset 0 1px 0 rgba(255,255,255,.14);}
+.topbar-search .input-wrap{box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+.hero-banner{box-shadow:0 18px 50px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06);}
+.section-head{margin-top:24px;}
+.card,.pcard,.plist-item,.profile-mini,.input-wrap,.icon-btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+.view{padding-top:8px;}
+#view-notifications .notif-item{box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+@media(max-width:520px){.bottomnav{bottom:8px;width:calc(100% - 18px);}.navbtn{min-height:52px;}.topbar{padding-left:13px;padding-right:13px;}}
+
+/* Mobile polish */
+@media(max-width:520px){.topbar .profile-mini span:last-child{display:none}.topbar{gap:8px}.topbar-search{min-width:0}}
+body.reduce-motion *,body.reduce-motion *::before,body.reduce-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+body.compact-ui .view{padding-left:14px;padding-right:14px}body.compact-ui .pcard{width:146px}.compact-ui .section-head{margin-top:17px}.compact-ui .plist-item{padding:10px}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-logo">ZM</div>
+  <div class="splash-text">ZHUO&nbsp;MARKET</div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ============ AUTH ============ -->
+<div id="auth-screen" style="display:none;">
+  <div class="auth-logo-row">
+    <div class="auth-logo">ZM</div>
+    <div class="auth-brand">Zhuo Market<small>Digital Marketplace</small></div>
+  </div>
+
+  <div class="auth-tabs">
+    <div class="auth-tab active" data-tab="login" onclick="setAuthTab('login')">Login</div>
+    <div class="auth-tab" data-tab="register" onclick="setAuthTab('register')">Kreye Kont</div>
+    <div class="auth-tab" data-tab="forgot" onclick="setAuthTab('forgot')">Mdp Bliye</div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="pane-login">
+    <div class="auth-title">Byenveni tounen</div>
+    <div class="auth-sub">Konekte pou kontinye achte ak vann.</div>
+    <div class="auth-field">
+      <label class="field-label">Imèl</label>
+      <div class="input-wrap"><span>✉️</span><input type="email" id="loginEmail" placeholder="w@email.com"></div>
+    </div>
+    <div class="auth-field">
+      <label class="field-label">Modpas</label>
+      <div class="input-wrap"><span>🔒</span><input type="password" id="loginPass" placeholder="••••••••"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:-6px 0 20px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);cursor:pointer;">
+        <input type="checkbox" id="rememberMe" style="width:15px;height:15px;accent-color:var(--red);cursor:pointer;">
+        Sonje mwen
+      </label>
+      <a class="auth-forgot" style="margin:0;" onclick="setAuthTab('forgot')">Mdp bliye?</a>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="login()">Konekte</button>
+    <div class="auth-divider">OSWA</div>
+    <button class="btn btn-ghost" style="width:100%" onclick="googleLogin()">
+      <span style="font-weight:800;color:#fff;background:#4285F4;width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">G</span>
+      Kontinye ak Google
+    </button>
+    <div class="auth-switch">Ou pa gen kont? <b onclick="setAuthTab('register')">Enskri gratis</b></div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="pane-register" class="hidden">
+    <div class="auth-title">Kreye kont ou</div>
+    <div class="auth-sub">Rejwenn kominote vandè ak achtè yo.</div>
+    <div class="auth-field"><label class="field-label">Non itilizatè</label><div class="input-wrap"><span>👤</span><input type="text" id="registerName" placeholder="ex: marc_dev"></div></div>
+    <div class="auth-field"><label class="field-label">Imèl</label><div class="input-wrap"><span>✉️</span><input type="email" id="registerEmail" placeholder="w@email.com"></div></div>
+    <div class="auth-field"><label class="field-label">Modpas</label><div class="input-wrap"><span>🔒</span><input type="password" id="registerPass" placeholder="Minimòm 8 karaktè"></div></div>
+    <button class="btn btn-primary" style="width:100%; margin-top:6px;" onclick="register()">Kreye Kont</button>
+    <div class="auth-divider">OSWA</div>
+    <button class="btn btn-ghost" style="width:100%" onclick="googleLogin()">
+      <span style="font-weight:800;color:#fff;background:#4285F4;width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">G</span>
+      Enskri ak Google
+    </button>
+    <div class="auth-switch">Ou gen kont deja? <b onclick="setAuthTab('login')">Konekte</b></div>
+  </div>
+
+  <!-- FORGOT -->
+  <div id="pane-forgot" class="hidden">
+    <div class="auth-title">Retrouve modpas</div>
+    <div class="auth-sub">Nou ap voye yon lyen reyajisteman nan imèl ou.</div>
+    <div class="auth-field"><label class="field-label">Imèl</label><div class="input-wrap"><span>✉️</span><input type="email" placeholder="w@email.com"></div></div>
+    <button class="btn btn-primary" style="width:100%" onclick="sendReset()">Voye Lyen Reyajisteman</button>
+    <div class="auth-switch">Sonje modpas ou? <b onclick="setAuthTab('login')">Konekte</b></div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-logo">ZM</div>
+    <div class="topbar-search" style="position:relative;">
+      <div class="input-wrap" style="padding:11px 14px;">
+        <span style="opacity:.6">🔍</span>
+        <input id="searchInput" placeholder="Chèche configs, templates, scripts..." oninput="onSearch(this.value)" onfocus="showSearchSuggestions()">
+        <span style="opacity:.6;cursor:pointer;" title="Rechèch vokal (AI, demo)" onclick="voiceSearchDemo()">🎙️</span>
+      </div>
+      <div id="searchSuggest" class="card hidden" style="position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:50;padding:10px;"></div>
+    </div>
+    <button class="icon-btn" onclick="openView('notifications')"><span class="badge-dot" id="notifDot"></span>🔔</button>
+    <button class="profile-mini" onclick="openView('profile')"><span class="profile-mini-avatar" id="miniProfileAvatar">AD</span><span style="font-size:10px;font-weight:800;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="miniProfileName">Admin</span></button>
+  </header>
+
+  <!-- ---------- HOME ---------- -->
+  <div class="view" id="view-home">
+    <div class="hero-banner">
+      <div class="hero-eyebrow">🔥 Nouvo — Sale 48H</div>
+      <div class="hero-title">Jiska 40% sou tout Pack Config Premium</div>
+      <div class="hero-sub">Konfigirasyon pro, template UI, telefòn/akseswa ak sèvis dijital soti nan pi bon vandè yo.</div>
+      <button class="btn btn-primary btn-sm" style="position:relative" onclick="openView('home')">Gade Òf yo →</button>
+      <div class="apple-orbit"><div class="orbit-bubble small orbit-netflix">N</div><div class="orbit-bubble small orbit-spotify">S</div><div class="orbit-bubble orbit-admin" id="heroAdminBubble">AD</div><div class="orbit-bubble small orbit-prime">P</div><div class="orbit-bubble small orbit-disney">D+</div><div class="orbit-label">Admin · Services · Premium</div></div>
+    </div>
+
+    <div class="section-head"><h3>Kategori</h3></div>
+    <div class="chip-row" id="homeCats"></div>
+
+    <div class="section-head"><h3>Pi popilè yo 🔥</h3><span class="see-all" onclick="openView('home')">Tout →</span></div>
+    <div class="hscroll" id="trendingRow"></div>
+    <div class="section-head"><h3>Abònman & Services ✦</h3><span class="see-all" onclick="openPremiumSheet()">Premium →</span></div>
+    <div class="hscroll" id="subscriptionsRow"></div>
+
+    <div class="section-head"><h3>Vandè yo mete devan</h3><span class="see-all">Tout →</span></div>
+    <div class="hscroll" id="sellersRow"></div>
+
+    <div class="section-head"><h3>Rekòmande pou ou</h3></div>
+    <div class="hscroll" id="recRow"></div>
+
+    <div class="section-head"><h3>Dènye Upload yo</h3><span class="see-all" onclick="openView('home')">Tout →</span></div>
+    <div id="recentList"></div>
+  </div>
+    <div id="cartSummaryWrap"></div>
+  </div>
+
+  <!-- ---------- NOTIFICATIONS ---------- -->
+  <div class="view hidden" id="view-notifications">
+    <h2 style="font-size:20px;margin:10px 0 16px;">Notifikasyon</h2>
+    <div id="notifList"></div>
+  </div>
+
+  <!-- ---------- PROFILE ---------- -->
+  <div class="view hidden" id="view-profile">
+    <div class="profile-head">
+      <div class="profile-avatar" id="profileAvatar">MD</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <h3 style="font-size:18px;" id="profileName">Marc Dorval</h3>
+        <span class="badge-premium" id="premiumBadge">✦ VIP</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px;">@marc_dev · Manm depi Janvye 2025</div>
+      <div class="profile-stats">
+        <div class="profile-stat"><b id="statPurchases">14</b><span>Acha</span></div>
+        <div class="profile-stat"><b id="statDownloads">37</b><span>Download</span></div>
+        <div class="profile-stat"><b id="statWishlist">6</b><span>Wishlist</span></div>
+      </div>
+    </div>
+
+    <div class="card vip-glow" style="padding:16px;margin:18px 0;display:flex;align-items:center;gap:12px;" id="profilePremiumCard">
+      <div style="font-size:26px;">✦</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:14px;" id="profilePremiumTitle">Manm Premium Aktif</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;" id="profilePremiumSub">Ekspire 12 Sept 2026 · Download rapid, pa gen reklam</div>
+      </div>
+      <button class="btn btn-outline-red btn-sm" onclick="openPremiumSheet()" id="profilePremiumBtn">Jere</button>
+    </div>
+
+    <div class="menu-item" onclick="openView('orders')"><div class="mi-ic">📦</div><div><div style="font-weight:600;font-size:13.5px;">Istorik Acha</div><div style="font-size:11px;color:var(--muted-2);">14 kòmand</div></div><div class="mi-arrow">›</div></div>
+    <div class="menu-item" onclick="openView('downloads')"><div class="mi-ic">⬇️</div><div><div style="font-weight:600;font-size:13.5px;">Download History</div><div style="font-size:11px;color:var(--muted-2);">37 fichye</div></div><div class="mi-arrow">›</div></div>
+    <div class="menu-item" onclick="openView('wishlist')"><div class="mi-ic">💛</div><div><div style="font-weight:600;font-size:13.5px;">Wishlist</div><div style="font-size:11px;color:var(--muted-2);">6 pwodwi</div></div><div class="mi-arrow">›</div></div>
+    <div class="menu-item" onclick="openView('support')"><div class="mi-ic">💬</div><div><div style="font-weight:600;font-size:13.5px;">Support & Kontak</div></div><div class="mi-arrow">›</div></div>
+    <div class="menu-item" onclick="openSettingsSheet()"><div class="mi-ic">⚙️</div><div><div style="font-weight:600;font-size:13.5px;">Paramèt</div><div style="font-size:11px;color:var(--muted-2);">Lang, aparans, alèt ak preferans</div></div><div class="mi-arrow">›</div></div>
+    <div class="menu-item" onclick="toggleDark()"><div class="mi-ic">🌙</div><div><div style="font-weight:600;font-size:13.5px;">Mòd Fènwa</div></div><div class="mi-arrow">›</div></div>
+<div><div style="font-weight:700;font-size:13.5px;color:var(--red-2);">Super Admin Panel</div><div style="font-size:11px;color:var(--muted-2);">Antre kòm administratè</div></div><div class="mi-arrow">›</div></div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:20px;color:var(--red-2);" onclick="logout()">Dekonekte</button>
+  </div>
+
+  <!-- ---------- ORDERS ---------- -->
+  <div class="view hidden" id="view-orders">
+    <div style="display:flex;align-items:center;gap:10px;margin:10px 0 16px;"><button class="icon-btn" onclick="openView('profile')">←</button><h2 style="font-size:19px;">Istorik Acha</h2></div>
+    <div id="ordersList"></div>
+  </div>
+
+  <!-- ---------- DOWNLOADS ---------- -->
+  <div class="view hidden" id="view-downloads">
+    <div style="display:flex;align-items:center;gap:10px;margin:10px 0 16px;"><button class="icon-btn" onclick="openView('profile')">←</button><h2 style="font-size:19px;">Download History</h2></div>
+    <div id="downloadsList"></div>
+  </div>
+
+  <!-- ---------- WISHLIST ---------- -->
+  <div class="view hidden" id="view-wishlist">
+    <div style="display:flex;align-items:center;gap:10px;margin:10px 0 16px;"><button class="icon-btn" onclick="openView('profile')">←</button><h2 style="font-size:19px;">Wishlist</h2></div>
+    <div id="wishlistList"></div>
+  </div>
+
+  <!-- ---------- SUPPORT ---------- -->
+  <div class="view hidden" id="view-support">
+    <div style="display:flex;align-items:center;gap:10px;margin:10px 0 16px;"><button class="icon-btn" onclick="openView('profile')">←</button><h2 style="font-size:19px;">Support</h2></div>
+    <div class="chip-row" style="margin-bottom:16px;">
+      <div class="chip active" onclick="setSupportTab(this,'chat')">💬 Live Chat</div>
+      <div class="chip" onclick="setSupportTab(this,'tickets')">🎫 Tickets</div>
+      <div class="chip" onclick="setSupportTab(this,'faq')">❓ FAQ</div>
+    </div>
+    <div id="support-chat">
+      <div class="card" style="padding:14px; max-height:340px; overflow-y:auto; margin-bottom:12px;" id="chatBox"></div>
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <button class="chip" onclick="attachDemo('screenshot')">📷 Upload Screenshot</button>
+        <button class="chip" onclick="attachDemo('image')">🖼️ Upload Imaj</button>
+      </div>
+      <div class="input-wrap">
+        <input id="chatInput" placeholder="Ekri mesaj ou..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-primary btn-sm" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+    <div id="support-tickets" class="hidden"></div>
+    <div id="support-faq" class="hidden"></div>
+  </div>
+
+  <!-- ---------- ADMIN ---------- -->
+
+<!-- ============ PRODUCT DETAIL SHEET ============ -->
+<div class="overlay" id="pdOverlay" onclick="if(event.target===this)closeSheet('pdOverlay')">
+  <div class="sheet" style="position:relative;">
+    <button class="sheet-close" onclick="closeSheet('pdOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="pdContent"></div>
+  </div>
+</div>
+
+<!-- ============ CHECKOUT SHEET ============ -->
+<div class="overlay" id="coOverlay" onclick="if(event.target===this)closeSheet('coOverlay')">
+  <div class="sheet" style="position:relative;">
+    <button class="sheet-close" onclick="closeSheet('coOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="coContent" style="padding:14px 20px 6px;"></div>
+  </div>
+</div>
+
+<!-- ============ ADD PRODUCT SHEET (AI ASSIST) ============ -->
+<div class="overlay" id="apOverlay" onclick="if(event.target===this)closeSheet('apOverlay')">
+  <div class="sheet" style="position:relative;">
+    <button class="sheet-close" onclick="closeSheet('apOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div style="padding:14px 20px 24px;">
+      <h3 style="font-size:16px;margin-bottom:14px;">➕ Nouvo Pwodwi</h3>
+      <div class="auth-field">
+        <label class="field-label">Kèk mo sou pwodwi a (pou AI)</label>
+        <div class="input-wrap"><input id="apSeed" placeholder="Ex: pack konfig Discord tèm neon..."></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn btn-outline-red btn-sm" style="flex:1" onclick="aiGenerateTitle()">✨ AI Title</button>
+        <button class="btn btn-outline-red btn-sm" style="flex:1" onclick="aiGenerateDesc()">✨ AI Deskripsyon</button>
+        <button class="btn btn-outline-red btn-sm" style="flex:1" onclick="aiGenerateTags()">✨ AI Tags</button>
+      </div>
+      <div class="auth-field"><label class="field-label">Tit</label><div class="input-wrap"><input id="apTitle"></div></div>
+      <div class="auth-field"><label class="field-label">Pri ($)</label><div class="input-wrap"><input id="apPrice" type="number"></div></div>
+      <div class="auth-field"><label class="field-label">Deskripsyon</label><div class="input-wrap" style="align-items:flex-start;"><textarea id="apDesc" rows="4" style="width:100%;resize:vertical;"></textarea></div></div>
+      <div class="auth-field"><label class="field-label">Tags AI (jenere otomatikman)</label><div id="apTags" style="font-size:11.5px;color:var(--muted);"></div></div>
+      <button class="btn btn-primary" style="width:100%" onclick="adminSaveProduct()">Anrejistre Pwodwi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAYMENT GATEWAY CONFIG SHEET ============ -->
+<div class="overlay" id="pgOverlay" onclick="if(event.target===this)closeSheet('pgOverlay')">
+  <div class="sheet" style="position:relative;">
+    <button class="sheet-close" onclick="closeSheet('pgOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="pgContent" style="padding:14px 20px 24px;"></div>
+  </div>
+</div>
+
+<!-- ============ PREMIUM SUBSCRIPTION SHEET ============ -->
+<div class="overlay" id="premOverlay" onclick="if(event.target===this)closeSheet('premOverlay')">
+  <div class="sheet" style="position:relative;">
+    <button class="sheet-close" onclick="closeSheet('premOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="premContent" style="padding:14px 20px 24px;"></div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS SHEET ============ -->
+<div class="overlay" id="settingsOverlay" onclick="if(event.target===this)closeSheet('settingsOverlay')"><div class="sheet" style="position:relative;"><button class="sheet-close" onclick="closeSheet('settingsOverlay')">✕</button><div class="sheet-handle"></div><div id="settingsContent" style="padding:12px 20px 28px"></div></div></div>
+
+<!-- ============ RECEIPT SHEET ============ -->
+<div class="overlay" id="rcOverlay" onclick="if(event.target===this)closeSheet('rcOverlay')">
+  <div class="sheet" style="position:relative;">
+    <div class="sheet-handle"></div>
+    <div id="rcContent" style="padding:10px 24px 10px; text-align:center;"></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   ZHUO MARKET — front-end prototype (demo data, no backend)
+===================================================================== */
+
+/* =====================================================================
+   ⚙️ ZONE CONFIGURASYON API — METE KLE REYÈL OU YO LA A
+   =====================================================================
+   Kòd anba a se demo (done fo, pa gen sèvè). Pou konekte app la ak
+   vrè sèvis yo, mete kle/kredansyèl ou yo nan objè yo anba a, epi
+   swiv kòmantè yo pou aktive vrè apèl API yo (chak gen yon egzanp
+   kòmante ki montre kijan pou itilize l).
+
+   1) FIREBASE — Auth, Firestore, Storage, Cloud Messaging
+      Jwenn valè yo nan: Firebase Console → Project Settings → General
+      Lyen: https://console.firebase.google.com
+   ------------------------------------------------------------------- */
+const FIREBASE_CONFIG = {
+  apiKey: "METE_API_KEY_FIREBASE_OU_LA",
+  authDomain: "METE_PROJECT_ID.firebaseapp.com",
+  projectId: "METE_PROJECT_ID",
+  storageBucket: "METE_PROJECT_ID.appspot.com",
+  messagingSenderId: "METE_SENDER_ID",
+  appId: "METE_APP_ID"
+};
+/* Pou aktive Firebase reyèl:
+   1. Ajoute nan <head> anvan li fèmen, 4 tag SDK Firebase sa yo
+      (app, auth, firestore, storage — vèsyon compat 10.12.0,
+      chèche "firebase compat cdn" pou lyen egzat yo).
+   2. Dekòmante 3 liy anba yo:
+      // firebase.initializeApp(FIREBASE_CONFIG);
+      // const auth = firebase.auth();
+      // const db = firebase.firestore();
+   3. Nan fonksyon login()/register() pi ba, ranplase lojik demo a
+      ak: auth.signInWithEmailAndPassword(email, pass) elatriye.       */
+
+/* ------------------------------------------------------------------
+   2) PEMAN — Stripe / PayPal / MonCash / NatCash
+   Kle piblik yo ale la a. JANM mete "secret key" nan yon fichye
+   front-end — sekrè yo dwe rete sou yon sèvè/backend ou.
+   ------------------------------------------------------------------- */
+const PAYMENT_CONFIG = {
+  stripePublishableKey: "METE_PK_STRIPE_OU_LA",     // pk_live_... oswa pk_test_...
+  paypalClientId: "METE_CLIENT_ID_PAYPAL_OU_LA",
+  moncashClientId: "METE_CLIENT_ID_MONCASH_OU_LA",  // Digicel MonCash API
+  natcashMerchantId: "METE_MERCHANT_ID_NATCASH_OU_LA",
+  backendCheckoutUrl: "METE_URL_BACKEND_OU_LA/api/checkout" // sèvè pa w ki trete peman an vrèman
+};
+/* Pou aktive peman reyèl:
+   Fonksyon confirmPayment() pi ba se yon SIMILASYON (setTimeout).
+   Ranplase kò fonksyon an ak yon vrè apèl fetch() sou
+   PAYMENT_CONFIG.backendCheckoutUrl, oswa entegre SDK Stripe/PayPal
+   Elements dirèkteman. Peman reyèl DWE pase pa yon backend — pa janm
+   trete kat kredi/kle sekrè dirèkteman nan navigatè a.               */
+/* ------------------------------------------------------------------
+   3) ZHUO CORE — motè AI santral (rekòmandasyon, rechèch, deskripsyon,
+      chat sipò, deteksyon fwod/spam/doub, elt.)
+   Tout apèl AI nan app la ta dwe pase pa yon BACKEND (jamè dirèkteman
+   soti nan yon app mobil/APK avèk kle sekrè anndan l). Nan demo HTML
+   sa a, apèl yo soti dirèkteman nan navigatè a paske pa gen sèvè —
+   sa OK pou tès, men pou pwodiksyon reyèl mete yon backend ant app la
+   ak founisè AI yo epi kenbe kle yo la sèlman.
+   ------------------------------------------------------------------- */
+const ZHUO_CORE_CONFIG = {
+  providers: {
+    gemini:     { label:'Google Gemini',  key:'', model:'gemini-2.0-flash',      enabled:false },
+    groq:       { label:'Groq',           key:'', model:'llama-3.3-70b-versatile', enabled:false },
+    openrouter: { label:'OpenRouter',     key:'', model:'openrouter/auto',       enabled:false },
+    openai:     { label:'OpenAI',         key:'', model:'gpt-4o-mini',           enabled:false },
+  },
+  defaultProvider: 'gemini',
+  fallbackOrder: ['gemini','groq','openrouter','openai'],
+};
+/* ---------------- ZHUO CORE — pèsistans kle API (mòd demo) ----------------
+   Kle/founisè AI yo (mete nan panel Admin → AI) sove lokalman sou
+   aparèy la pou yo rete la menm apre ou fèmen ak re-ouvri app la
+   (pa gen bezwen retape kle a chak fwa anvan ou soti nan APK a). */
+const AI_CONFIG_KEY = 'zhuo_ai_provider_config';
+function saveAiConfig(){
+  try{
+    localStorage.setItem(AI_CONFIG_KEY, JSON.stringify({
+      defaultProvider: ZHUO_CORE_CONFIG.defaultProvider,
+      providers: ZHUO_CORE_CONFIG.providers
+    }));
+  }catch(e){}
+}
+function loadAiConfig(){
+  try{
+    const raw = localStorage.getItem(AI_CONFIG_KEY);
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    if(saved.defaultProvider) ZHUO_CORE_CONFIG.defaultProvider = saved.defaultProvider;
+    if(saved.providers){
+      Object.keys(saved.providers).forEach(id=>{
+        if(ZHUO_CORE_CONFIG.providers[id]){
+          ZHUO_CORE_CONFIG.providers[id].key = saved.providers[id].key || '';
+          ZHUO_CORE_CONFIG.providers[id].enabled = !!saved.providers[id].enabled;
+        }
+      });
+    }
+  }catch(e){}
+}
+loadAiConfig();
+let AI_LOGS = [];
+function aiLog(provider, feature, ok, note){
+  AI_LOGS.unshift({time:new Date().toLocaleTimeString(), provider, feature, ok, note});
+  if(AI_LOGS.length>60) AI_LOGS.length=60;
+  if(document.getElementById('adminAiLogs')) renderAiLogs();
+}
+/* Rele yon founisè espesifik. Ranplase kò "call" pou chak founisè ak
+   vrè fetch() nan pwodiksyon (egzanp Gemini ba a montre fòma a). */
+async function callProvider(providerId, prompt){
+  const p = ZHUO_CORE_CONFIG.providers[providerId];
+  if(!p || !p.enabled || !p.key) throw new Error('provider-not-configured');
+  if(providerId==='gemini'){
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${p.model}:generateContent?key=${p.key}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ contents:[{ parts:[{text:prompt}] }] })
+    });
+    if(!res.ok) throw new Error('gemini-http-'+res.status);
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
+  if(providerId==='groq' || providerId==='openrouter' || providerId==='openai'){
+    const endpoints = {
+      groq:'https://api.groq.com/openai/v1/chat/completions',
+      openrouter:'https://openrouter.ai/api/v1/chat/completions',
+      openai:'https://api.openai.com/v1/chat/completions',
+    };
+    const res = await fetch(endpoints[providerId],{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${p.key}`},
+      body: JSON.stringify({ model:p.model, messages:[{role:'user', content:prompt}] })
+    });
+    if(!res.ok) throw new Error(providerId+'-http-'+res.status);
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || '';
+  }
+  throw new Error('unknown-provider');
+}
+/* Pwen antre prensipal pou tout fonksyon AI nan app la. Eseye
+   defaultProvider dabò, si li echwe li otomatikman eseye pwochen
+   founisè ki aktive nan fallbackOrder. Si okenn kle pa konfigire,
+   li retounen yon repons "demo" reyalis pou UI a toujou fonksyone. */
+async function zhuoCore(feature, prompt, demoFallback){
+  const order = [ZHUO_CORE_CONFIG.defaultProvider, ...ZHUO_CORE_CONFIG.fallbackOrder].filter((v,i,a)=>a.indexOf(v)===i);
+  for(const providerId of order){
+    const p = ZHUO_CORE_CONFIG.providers[providerId];
+    if(!p || !p.enabled || !p.key) continue;
+    try{
+      const text = await callProvider(providerId, prompt);
+      aiLog(providerId, feature, true, 'OK');
+      return { text: text || demoFallback, provider: providerId, live:true };
+    }catch(err){
+      aiLog(providerId, feature, false, err.message);
+      continue; // eseye pwochen founisè a (fallback otomatik)
+    }
+  }
+  aiLog('demo', feature, true, 'Okenn kle konfigire — repons demo');
+  return { text: demoFallback, provider:'demo', live:false };
+}
+
+/* =====================================================================
+   💳 PAYMENT GATEWAY MANAGER — arsitekti modilè & evolutif
+   =====================================================================
+   Chak founisè se yon "adapter" ki gen menm fòm (schema). Pou ajoute
+   yon nouvo founisè pita (Visa, Mastercard, Apple Pay, Google Pay,
+   Stripe, Binance Pay, Wise, Skrill, Flutterwave, Coinbase Commerce,
+   oswa nenpòt lòt founisè ki gen API+webhook), ou jis ajoute yon nouvo
+   antre nan GATEWAY_REGISTRY anba a — pa gen okenn lòt kòd pou chanje,
+   UI admin ak checkout la jenere yo otomatikman.
+
+   AUCUNE clé n'est codée en dur : tout chan yo kòmanse vid ('') epi yo
+   ranpli/modifye sèlman nan Admin → 💳 Peman. Yo sove lokalman (demo)
+   epi, nan pwodiksyon, yo ta dwe viv sou yon backend/DB sekirize, pa
+   nan localStorage navigatè a.
+   ------------------------------------------------------------------- */
+const GATEWAY_REGISTRY = [
+  // ---- Aktif nan premye vèsyon an ----
+  { id:'moncash',  label:'MonCash',  icon:'🇭🇹', group:'active', currency:'HTG', webhookCapable:true,  note:'Digicel MonCash — API + Webhook otomatik.' },
+  { id:'natcash',  label:'NatCash',  icon:'🇭🇹', group:'active', currency:'HTG', webhookCapable:true,  note:'Natcom NatCash — API + Webhook otomatik.' },
+  { id:'paypal',   label:'PayPal',   icon:'🟦', group:'active', currency:'USD', webhookCapable:true,  note:'PayPal Checkout + Webhook (PAYMENT.CAPTURE.COMPLETED).' },
+  { id:'zelle',    label:'Zelle',    icon:'🇺🇸', group:'active', currency:'USD', webhookCapable:false, note:'⚠️ Zelle PA GEN API/webhook piblik pou machann — bank pa ofri verifikasyon otomatik. Itilize referans + rapwochman labank (gade payment-server.js) oswa apwobasyon rapid nan Kòmand.' },
+  // ---- Disponib pou ajoute pita (deja nan estrikti a, dezaktive) ----
+  { id:'visa',       label:'Visa (Direct)',      icon:'💳', group:'future', currency:'USD', webhookCapable:true, note:'Pase pa yon pwosesè (Stripe/Adyen/etc.) — pa entegre kat dirèkteman san PCI-DSS.' },
+  { id:'mastercard', label:'Mastercard (Direct)', icon:'💳', group:'future', currency:'USD', webhookCapable:true, note:'Menm rekòmandasyon ak Visa — pase pa yon pwosesè sètifye.' },
+  { id:'applepay',   label:'Apple Pay',           icon:'', group:'future', currency:'USD', webhookCapable:true, note:'Mande yon pwosesè (Stripe/Adyen) ki sipòte Apple Pay.' },
+  { id:'googlepay',  label:'Google Pay',          icon:'🔵', group:'future', currency:'USD', webhookCapable:true, note:'Mande yon pwosesè ki sipòte Google Pay.' },
+  { id:'stripe',     label:'Stripe',              icon:'💠', group:'future', currency:'USD', webhookCapable:true, note:'Kat kredi entènasyonal + anpil lòt metòd.' },
+  { id:'binancepay', label:'Binance Pay',         icon:'🟡', group:'future', currency:'USDT', webhookCapable:true, note:'Peman kripto — webhook siyen ak HMAC.' },
+  { id:'wise',       label:'Wise',                icon:'🌍', group:'future', currency:'USD', webhookCapable:true, note:'Transfè entènasyonal.' },
+  { id:'skrill',     label:'Skrill',              icon:'🟣', group:'future', currency:'USD', webhookCapable:true, note:'Wallet dijital entènasyonal.' },
+  { id:'flutterwave',label:'Flutterwave',         icon:'🟧', group:'future', currency:'USD', webhookCapable:true, note:'Peman Afrik + entènasyonal.' },
+  { id:'coinbasecommerce', label:'Coinbase Commerce', icon:'🟦', group:'future', currency:'USDC', webhookCapable:true, note:'Peman kripto — webhook siyen ak HMAC (X-CC-Webhook-Signature).' },
+];
+function freshGatewayConfig(){
+  const cfg = {};
+  GATEWAY_REGISTRY.forEach(g=>{
+    cfg[g.id] = { enabled:false, mode:'sandbox', currency:g.currency, apiKey:'', secretKey:'', merchantId:'', webhookUrl:'', webhookSecret:'' };
+  });
+  return cfg;
+}
+let PAYMENT_GATEWAYS = freshGatewayConfig();
+const PAYMENT_GATEWAYS_KEY = 'zhuo_payment_gateways_config';
+function savePaymentGateways(){
+  try{ localStorage.setItem(PAYMENT_GATEWAYS_KEY, JSON.stringify(PAYMENT_GATEWAYS)); }catch(e){}
+}
+function loadPaymentGateways(){
+  try{
+    const raw = localStorage.getItem(PAYMENT_GATEWAYS_KEY);
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    Object.keys(saved).forEach(id=>{ if(PAYMENT_GATEWAYS[id]) PAYMENT_GATEWAYS[id] = {...PAYMENT_GATEWAYS[id], ...saved[id]}; });
+  }catch(e){}
+}
+loadPaymentGateways();
+
+function isGatewayConfigured(id){
+  const c = PAYMENT_GATEWAYS[id]; if(!c) return false;
+  const g = GATEWAY_REGISTRY.find(x=>x.id===id);
+  const needsMerchant = ['moncash','natcash'].includes(id);
+  return !!(c.apiKey && c.secretKey && (!needsMerchant || c.merchantId) && (!g.webhookCapable || c.webhookUrl));
+}
+function toggleGateway(id){
+  PAYMENT_GATEWAYS[id].enabled = !PAYMENT_GATEWAYS[id].enabled;
+  if(PAYMENT_GATEWAYS[id].enabled && !isGatewayConfigured(id)){
+    toast('⚠️', GATEWAY_REGISTRY.find(g=>g.id===id).label+' aktive men konfigirasyon enkonplè — ranpli kle yo.');
+  }
+  savePaymentGateways(); renderPaymentGateways();
+}
+function openGatewayConfig(id){
+  const g = GATEWAY_REGISTRY.find(x=>x.id===id); const c = PAYMENT_GATEWAYS[id];
+  document.getElementById('pgContent').innerHTML = `
+    <h3 style="font-size:16px;margin-bottom:4px;">${g.icon} ${g.label}</h3>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:16px;">${g.note}</div>
+    <div class="auth-field"><label class="field-label">API Key</label><div class="input-wrap"><input id="pgApiKey" placeholder="Kle piblik/API" value="${c.apiKey}"></div></div>
+    <div class="auth-field"><label class="field-label">Secret Key</label><div class="input-wrap"><input id="pgSecretKey" type="password" placeholder="Kle sekrè (backend sèlman)" value="${c.secretKey}"></div></div>
+    <div class="auth-field"><label class="field-label">Merchant ID</label><div class="input-wrap"><input id="pgMerchantId" placeholder="ID Machann" value="${c.merchantId}"></div></div>
+    <div class="auth-field"><label class="field-label">Webhook URL</label><div class="input-wrap"><input id="pgWebhookUrl" placeholder="https://ou-backend.com/webhooks/${id}" value="${c.webhookUrl}"></div></div>
+    <div class="auth-field"><label class="field-label">Webhook Secret</label><div class="input-wrap"><input id="pgWebhookSecret" type="password" placeholder="Sekrè pou verifye siyati webhook" value="${c.webhookSecret}"></div></div>
+    <div class="auth-field"><label class="field-label">Mòd</label><select id="pgMode" class="input-wrap" style="width:100%;padding:12px 14px;">
+      <option value="sandbox" ${c.mode==='sandbox'?'selected':''}>Sandbox (tès)</option>
+      <option value="production" ${c.mode==='production'?'selected':''}>Production (reyèl)</option>
+    </select></div>
+    <div class="auth-field"><label class="field-label">Devise</label><div class="input-wrap"><input id="pgCurrency" value="${c.currency}"></div></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:6px;" onclick="saveGatewayConfig('${id}')">💾 Anrejistre Konfigirasyon</button>
+  `;
+  showSheet('pgOverlay');
+}
+function saveGatewayConfig(id){
+  PAYMENT_GATEWAYS[id] = {
+    ...PAYMENT_GATEWAYS[id],
+    apiKey: document.getElementById('pgApiKey').value.trim(),
+    secretKey: document.getElementById('pgSecretKey').value.trim(),
+    merchantId: document.getElementById('pgMerchantId').value.trim(),
+    webhookUrl: document.getElementById('pgWebhookUrl').value.trim(),
+    webhookSecret: document.getElementById('pgWebhookSecret').value.trim(),
+    mode: document.getElementById('pgMode').value,
+    currency: document.getElementById('pgCurrency').value.trim() || PAYMENT_GATEWAYS[id].currency,
+  };
+  savePaymentGateways();
+  closeSheet('pgOverlay');
+  renderPaymentGateways();
+  toast('💾', GATEWAY_REGISTRY.find(g=>g.id===id).label+' konfigire.');
+}
+function gatewayRowHTML(g){
+  const c = PAYMENT_GATEWAYS[g.id];
+  const configured = isGatewayConfigured(g.id);
+  return `<div class="admin-row" style="align-items:center;">
+    <div style="font-size:20px;">${g.icon}</div>
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:13px;">${g.label} ${c.enabled?'<span class="status-tag status-paid" style="margin-left:4px;">Aktif</span>':''}</div>
+      <div style="font-size:11px;color:var(--muted-2);">${configured?('Mòd: '+c.mode+' · '+c.currency):'Poko konfigire'}</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="openGatewayConfig('${g.id}')">⚙️</button>
+    <button class="btn ${c.enabled?'btn-outline-red':'btn-ghost'} btn-sm" onclick="toggleGateway('${g.id}')">${c.enabled?'Off':'Aktive'}</button>
+  </div>`;
+}
+function renderPaymentGateways(){
+  const activeEl = document.getElementById('pgActiveList');
+  const availEl = document.getElementById('pgAvailableList');
+  if(!activeEl || !availEl) return;
+  activeEl.innerHTML = GATEWAY_REGISTRY.filter(g=>g.group==='active').map(gatewayRowHTML).join('');
+  availEl.innerHTML = GATEWAY_REGISTRY.filter(g=>g.group==='future').map(gatewayRowHTML).join('');
+}
+let WEBHOOK_LOG = [];
+function logWebhookEvent(gatewayId, ok, note){
+  const g = GATEWAY_REGISTRY.find(x=>x.id===gatewayId);
+  WEBHOOK_LOG.unshift({time:new Date().toLocaleTimeString(), gateway:g?g.label:gatewayId, ok, note});
+  if(WEBHOOK_LOG.length>50) WEBHOOK_LOG.length=50;
+  const el = document.getElementById('pgWebhookLog');
+  if(el) el.innerHTML = WEBHOOK_LOG.map(l=>`<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">${l.ok?'✅':'❌'} <b>${l.gateway}</b> — ${l.note} <span style="color:var(--muted-2);">${l.time}</span></div>`).join('');
+}
+
+/* Anrejistreman tranzaksyon deja trete (anti-doub). Nan pwodiksyon sa a
+   dwe viv nan yon baz done sou backend, pa nan memwa navigatè a. */
+let PROCESSED_TX_IDS = new Set();
+
+/* Pwen antre "verifikasyon otomatik". Nan yon backend reyèl, sa a se
+   egzakteman sa ki rive nan yon route /webhooks/:gateway apre founisè
+   a rele w: 1) verifye siyati 2) verifye ID tranzaksyon 3) verifye
+   montan 4) verifye itilizatè 5) bloke doub. Isit la (demo front-end
+   san sèvè) nou SIMILE etap sa yo pou UI a ka montre eksperyans final
+   la; gade payment-server.js pou vrè kòd backend ki fè verifikasyon
+   an an sekirite. */
+function verifyPaymentTransaction(gatewayId, expectedAmount, userId){
+  const txId = gatewayId.toUpperCase()+'-'+Date.now()+'-'+Math.floor(Math.random()*9000+1000);
+  const g = GATEWAY_REGISTRY.find(x=>x.id===gatewayId);
+  const configured = isGatewayConfigured(gatewayId);
+
+  // 1) siyati/konfigirasyon
+  if(!configured){
+    logWebhookEvent(gatewayId, false, 'Siyati/kle pa konfigire — verifikasyon rejte');
+    return { ok:false, reason:'not-configured' };
+  }
+  // 2) doub tranzaksyon
+  if(PROCESSED_TX_IDS.has(txId)){
+    logWebhookEvent(gatewayId, false, 'Tranzaksyon doub bloke: '+txId);
+    return { ok:false, reason:'duplicate' };
+  }
+  // 3) montan + 4) itilizatè (isit la toujou valid nan demo a)
+  const amountOk = expectedAmount > 0;
+  const userOk = !!userId;
+  if(!amountOk || !userOk){
+    logWebhookEvent(gatewayId, false, 'Montan/itilizatè envalid');
+    return { ok:false, reason:'invalid-data' };
+  }
+  if(!g.webhookCapable){
+    logWebhookEvent(gatewayId, true, txId+' — bezwen rapwochman manyèl/labank (pa gen webhook piblik pou '+g.label+')');
+  } else {
+    PROCESSED_TX_IDS.add(txId);
+    logWebhookEvent(gatewayId, true, txId+' — siyati OK, montan OK, itilizatè OK');
+  }
+  return { ok:true, txId };
+}
+
+/* ---------------- PREMIUM PLANS ---------------- */
+const PREMIUM_PLANS = [
+  {id:'p1m', label:'1 Mwa', days:30, price:4.99},
+  {id:'p3m', label:'3 Mwa', days:90, price:12.99},
+  {id:'p1y', label:'1 An', days:365, price:39.99},
+];
+let selectedPremiumPlan = 'p1m'; let selectedPremiumPay = null;
+function openPremiumSheet(){
+  selectedPremiumPlan='p1m'; selectedPremiumPay = enabledGateways()[0]?.id || null;
+  renderPremiumSheet(); showSheet('premOverlay');
+}
+function enabledGateways(){ return GATEWAY_REGISTRY.filter(g=>PAYMENT_GATEWAYS[g.id].enabled); }
+function selectPremiumPlan(id){ selectedPremiumPlan=id; renderPremiumSheet(); }
+function selectPremiumPay(id){ selectedPremiumPay=id; renderPremiumSheet(); }
+function renderPremiumSheet(){
+  const plan = PREMIUM_PLANS.find(p=>p.id===selectedPremiumPlan);
+  const gateways = enabledGateways();
+  document.getElementById('premContent').innerHTML = `
+    <h2 style="font-size:19px;margin:8px 0 16px;">✦ Abònman Premium</h2>
+    <div class="section-head" style="margin:0 0 10px;"><h3 style="font-size:13.5px;">Chwazi Plan</h3></div>
+    ${PREMIUM_PLANS.map(p=>`<div class="pay-method ${selectedPremiumPlan===p.id?'selected':''}" onclick="selectPremiumPlan('${p.id}')">
+      <div class="pay-icon" style="background:rgba(255,255,255,0.06);">✦</div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:13.5px;">${p.label}</div><div style="font-size:11px;color:var(--muted);">$${p.price.toFixed(2)}</div></div>
+    </div>`).join('')}
+    <div class="section-head" style="margin:16px 0 10px;"><h3 style="font-size:13.5px;">Metòd Peman</h3></div>
+    ${gateways.length===0 ? `<div style="font-size:12px;color:var(--muted);padding:10px 0;">Okenn metòd peman aktif — kontakte admin.</div>` :
+      gateways.map(g=>`<div class="pay-method ${selectedPremiumPay===g.id?'selected':''}" onclick="selectPremiumPay('${g.id}')">
+        <div class="pay-icon" style="background:rgba(255,255,255,0.06);">${g.icon}</div>
+        <div style="flex:1;"><div style="font-weight:700;font-size:13.5px;">${g.label}</div><div style="font-size:11px;color:var(--muted);">${PAYMENT_GATEWAYS[g.id].mode}</div></div>
+      </div>`).join('')}
+    <div class="card" style="padding:16px;margin:16px 0;">
+      <div class="summary-row total"><span>Total a peye</span><span>$${plan.price.toFixed(2)}</span></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;" ${gateways.length===0?'disabled':''} onclick="confirmPremiumPayment()">🔒 Peye $${plan.price.toFixed(2)} kounye a</button>
+  `;
+}
+function confirmPremiumPayment(){
+  if(!selectedPremiumPay) return;
+  const plan = PREMIUM_PLANS.find(p=>p.id===selectedPremiumPlan);
+  const btn = event.target; btn.innerHTML='⏳ Ap verifye peman...'; btn.style.opacity='0.7';
+  setTimeout(()=>{
+    const result = verifyPaymentTransaction(selectedPremiumPay, plan.price, state.user.email||state.user.name);
+    if(result.ok){
+      const now = new Date();
+      const expires = new Date(now.getTime()+plan.days*86400000);
+      state.user.premium = true;
+      state.user.premiumActivatedAt = now.toISOString();
+      state.user.premiumExpiresAt = expires.toISOString();
+      closeSheet('premOverlay');
+      toast('✅','Paiement confirmé. Premium activé.');
+      NOTIFS.unshift({ic:'✦', title:'Premium Aktive', body:`Abònman ${plan.label} aktif jiska ${expires.toLocaleDateString()}`, time:'Kounye a', unread:true});
+      renderNotifDot(); renderProfile && renderProfile();
+    } else {
+      toast('❌','Paiement échoué. Veuillez réessayer.');
+    }
+  }, 1500);
+}
+
+const CATS = [
+  {id:'config', label:'Config Files', icon:'⚙️', color:'#ff1338'},
+  {id:'template', label:'Templates', icon:'🧩', color:'#7c5cff'},
+  {id:'script', label:'Scripts', icon:'⌨️', color:'#3ddc84'},
+  {id:'graphic', label:'Graphics', icon:'🎨', color:'#ffcf5c'},
+  {id:'download', label:'Digital Downloads', icon:'📦', color:'#4dd0ff'},
+  {id:'telegram', label:'Bot Telegram', icon:'🤖', color:'#2AABEE'},
+  {id:'android', label:'Android', icon:'📱', color:'#3DDC84'},
+  {id:'freefire', label:'Free Fire', icon:'🔥', color:'#FF6A00'},
+  {id:'phone', label:'Telefòn & Akseswa', icon:'📱', color:'#6AA7FF'},
+  {id:'subscription', label:'Abònman', icon:'✦', color:'#9F7CFF'},
+];
+const catMap = Object.fromEntries(CATS.map(c=>[c.id,c]));
+
+function catBg(id){ const c=catMap[id]; return `linear-gradient(135deg, ${c.color}33, ${c.color}0d)`; }
+
+const SELLERS = [
+  {id:'s1', name:'RedCode Studio', initials:'RC', color:'#ff1338', verified:true, rating:4.9},
+  {id:'s2', name:'Nova Assets', initials:'NA', color:'#7c5cff', verified:true, rating:4.8},
+  {id:'s3', name:'PixelForge Ht', initials:'PF', color:'#3ddc84', verified:false, rating:4.6},
+  {id:'s4', name:'ScriptLab', initials:'SL', color:'#ffcf5c', verified:true, rating:4.95},
+  {id:'s5', name:'Zhuo Originals', initials:'ZO', color:'#4dd0ff', verified:true, rating:5.0},
+];
+const sellerMap = Object.fromEntries(SELLERS.map(s=>[s.id,s]));
+
+let PRODUCTS = [
+  {id:'p1', title:'Neon Discord Config Pack', cat:'config', seller:'s1', price:12, rating:4.9, reviews:214, downloads:3820, icon:'⚙️', desc:'Yon pack konfigirasyon Discord premium ak tèm neon wouj, wòl otomatik, ak plis pase 40 embed prè pou itilize. Byen dokimante, enstalasyon 2 minit.'},
+  {id:'p2', title:'Luxury Mobile UI Kit', cat:'template', seller:'s5', price:24, rating:5.0, reviews:341, downloads:5210, icon:'🧩', desc:'Kit UI mobil premium ak 60+ screen, style glassmorphism, prè pou Figma ak React Native.'},
+  {id:'p3', title:'Auto-Deploy Bash Script', cat:'script', seller:'s4', price:8, rating:4.8, reviews:98, downloads:1420, icon:'⌨️', desc:'Script bash pou otomatize deplwaman sèvè w yo an 1 komand, ak backup otomatik.'},
+  {id:'p4', title:'Neon Logo Pack Vol.2', cat:'graphic', seller:'s3', price:6, rating:4.6, reviews:76, downloads:980, icon:'🎨', desc:'50 logo neon vektorize, pare pou branding rezo sosyal ak sèvè gaming.'},
+  {id:'p5', title:'Premium Icon Bundle 1200+', cat:'graphic', seller:'s2', price:15, rating:4.85, reviews:189, downloads:2670, icon:'🖼️', desc:'1200+ icon SVG/PNG nan style glassmorphism, òganize pa kategori.'},
+  {id:'p6', title:'E-commerce Firestore Template', cat:'template', seller:'s5', price:32, rating:4.95, reviews:156, downloads:1890, icon:'🛒', desc:'Template konplè Firestore pou app e-commerce ak règ sekirite deja konfigire.'},
+  {id:'p7', title:'Server Monitoring Script Kit', cat:'script', seller:'s4', price:10, rating:4.7, reviews:64, downloads:730, icon:'📡', desc:'Kolèksyon script pou siveye CPU, RAM ak trafik sèvè an tan reyèl ak alèt Telegram.'},
+  {id:'p8', title:'Cinematic LUT Pack', cat:'download', seller:'s3', price:9, rating:4.5, reviews:52, downloads:610, icon:'🎬', desc:'20 LUT sinematik pou video, konpatib ak Premiere, DaVinci ak Final Cut.'},
+  {id:'p9', title:'Admin Dashboard Config', cat:'config', seller:'s1', price:18, rating:4.88, reviews:143, downloads:2040, icon:'🛡️', desc:'Konfigirasyon dashboard admin konplè ak chart, tab itilizatè ak jesyon kòmand.'},
+  {id:'p10', title:'Glass Portfolio Template', cat:'template', seller:'s2', price:14, rating:4.75, reviews:88, downloads:1210, icon:'🌐', desc:'Template pòtfolyo pèsonèl style verre, animasyon fluid, responsive 100%.'},
+  {id:'p12', title:'Social Media Story Pack', cat:'graphic', seller:'s3', price:5, rating:4.4, reviews:39, downloads:520, icon:'📱', desc:'80 template story pou Instagram/Snap, edite fasil nan Canva.'},
+  /* ---- Bot Telegram ---- */
+  {id:'p13', title:'Telegram Bot Starter Script', cat:'telegram', seller:'s4', price:11, rating:4.6, reviews:71, downloads:990, icon:'🤖', desc:'Baz kòd pou kreye bot Telegram ak komand admin, welcome message ak modération.'},
+  {id:'p14', title:'Telegram Auto-Reply Bot', cat:'telegram', seller:'s4', price:9, rating:4.5, reviews:58, downloads:740, icon:'💬', desc:'Bot Telegram ki reponn otomatikman kliyan yo 24/7 ak mesaj pèsonalize.'},
+  {id:'p15', title:'Telegram Bot Panel Premium', cat:'telegram', seller:'s1', price:22, rating:4.85, reviews:112, downloads:1560, icon:'🛠️', desc:'Panel jesyon konplè pou plizyè bot Telegram, ak analytics ak jesyon manm.'},
+  {id:'p16', title:'Telegram Sticker/Emoji Pack', cat:'telegram', seller:'s3', price:4, rating:4.3, reviews:33, downloads:410, icon:'🎭', desc:'Pack sticker ak emoji pèsonalize pou sèvè/kanal Telegram ou.'},
+  /* ---- Android ---- */
+  {id:'p17', title:'Android APK Signing Config', cat:'android', seller:'s1', price:13, rating:4.7, reviews:64, downloads:880, icon:'📱', desc:'Konfigirasyon konplè pou siyen ak build APK Android an sekirite.'},
+  {id:'p18', title:'Android UI Kit Premium', cat:'android', seller:'s5', price:19, rating:4.9, reviews:203, downloads:2980, icon:'📲', desc:'Kit UI Android konplè, style Material glassmorphism, 80+ ekran prè.'},
+  {id:'p19', title:'Android MOD Tools Pack', cat:'android', seller:'s4', price:16, rating:4.6, reviews:97, downloads:1340, icon:'🧰', desc:'Zouti pou modifye/optimize app Android, ak gid enstalasyon konplè.'},
+  {id:'p20', title:'Android Custom ROM Config', cat:'android', seller:'s2', price:20, rating:4.65, reviews:81, downloads:1120, icon:'⚡', desc:'Konfigirasyon ROM pèsonalize pou telefòn Android, optimize batri ak vitès.'},
+  /* ---- Free Fire ---- */
+  {id:'p21', title:'Free Fire Sensitivity Config', cat:'freefire', seller:'s1', price:7, rating:4.9, reviews:412, downloads:6200, icon:'🎯', desc:'Konfigirasyon sansiblite pro pou Free Fire, vize san rekil, headshot fasil.'},
+  {id:'p22', title:'Free Fire HUD/Skin Pack', cat:'freefire', seller:'s3', price:6, rating:4.5, reviews:156, downloads:2340, icon:'🎮', desc:'Pack HUD ak skin pèsonalize pou Free Fire, enstalasyon rapid.'},
+  {id:'p23', title:'Free Fire Guild/Squad Template', cat:'freefire', seller:'s2', price:8, rating:4.4, reviews:67, downloads:930, icon:'🛡️', desc:'Template pou kreye logo ak baniyè guild/squad Free Fire ou.'},
+  {id:'p24', title:'Free Fire Montage Pack (FX+LUT)', cat:'freefire', seller:'s3', price:10, rating:4.7, reviews:129, downloads:1780, icon:'🎬', desc:'Pack efè ak LUT pou monte videyo montage Free Fire tankou pro.'},
+];
+
+/* ---- Telefòn / Akseswa / Abònman ---- */
+PRODUCTS.push({id:'p25',title:'iPhone 15 Pro — 256GB',cat:'phone',seller:'s5',price:799,rating:4.9,reviews:87,downloads:0,icon:'📱',desc:'Smartphone premium pou storefront fizik.'},{id:'p26',title:'AirPods Pro 2',cat:'phone',seller:'s2',price:189,rating:4.8,reviews:121,downloads:0,icon:'🎧',desc:'Akseswa audio premium pou marketplace la.'},{id:'p27',title:'Netflix Premium — 1 Mwa',cat:'subscription',seller:'s1',price:8.99,rating:4.9,reviews:310,downloads:0,icon:'N',desc:'Abònman digital; aktivasyon reyèl mande yon founisè legal.'},{id:'p28',title:'Spotify Premium — 1 Mwa',cat:'subscription',seller:'s3',price:5.99,rating:4.8,reviews:204,downloads:0,icon:'S',desc:'Abònman mizik digital nan katalog sèvis yo.'},{id:'p29',title:'Prime Video — 1 Mwa',cat:'subscription',seller:'s4',price:6.99,rating:4.7,reviews:141,downloads:0,icon:'P',desc:'Abònman streaming digital.'},{id:'p30',title:'Disney+ — 1 Mwa',cat:'subscription',seller:'s2',price:7.99,rating:4.8,reviews:115,downloads:0,icon:'D+',desc:'Abònman streaming digital.'});
+
+let ORDERS = [
+  {id:'ZF-88213', product:'p2', date:'28 Jiy 2026', price:24, method:'Stripe', status:'paid'},
+  {id:'ZF-88190', product:'p1', date:'21 Jiy 2026', price:12, method:'PayPal', status:'paid'},
+  {id:'ZF-88104', product:'p6', date:'09 Jiy 2026', price:32, method:'MonCash', status:'paid'},
+  {id:'ZF-87990', product:'p5', date:'27 Jen 2026', price:15, method:'Credit Card', status:'paid'},
+];
+
+let DOWNLOADS = [
+  {product:'p2', date:'28 Jiy 2026', size:'128 MB'},
+  {product:'p1', date:'21 Jiy 2026', size:'6 MB'},
+  {product:'p6', date:'09 Jiy 2026', size:'54 MB'},
+  {product:'p5', date:'27 Jen 2026', size:'41 MB'},
+];
+
+let WISHLIST = ['p3','p8','p9','p10','p13','p4'];
+
+let NOTIFS = [
+  {ic:'💳', title:'Acha konfime', body:'Ou achte "Luxury Mobile UI Kit" — $24.00', time:'Jodi a · 10:24', unread:true},
+  {ic:'🎁', title:'Pwomosyon nouvo', body:'40% rabè sou tout Pack Config jiska demen', time:'Jodi a · 08:02', unread:true},
+  {ic:'💬', title:'Repons Support', body:'Ekip la reponn tikè #4021 ou a', time:'Yè · 19:41', unread:false},
+  {ic:'⏰', title:'Premium ap ekspire byento', body:'Abònman VIP ou ekspire nan 12 jou', time:'2 jou pase', unread:false},
+  {ic:'📦', title:'Pwodwi mizajou', body:'"Neon Discord Config Pack" gen yon nouvo vèsyon', time:'3 jou pase', unread:false},
+];
+
+let CART = [ {product:'p1', qty:1}, {product:'p9', qty:1} ];
+
+let TICKETS = [
+  {id:'#4021', subject:'Download pa mache', status:'pending', date:'01 Out 2026'},
+  {id:'#3986', subject:'Mande ranbousman', status:'paid', date:'22 Jiy 2026'},
+];
+
+let ADMIN_ORDERS = [
+  {id:'ZF-88320', customer:'Sophia Jean', email:'sophia.j@mail.com', product:'Luxury Mobile UI Kit', price:24, method:'Stripe', time:'Jodi a, 14:02', status:'paid'},
+  {id:'ZF-88319', customer:'Kenson Pierre', email:'kenson.p@mail.com', product:'Neon Discord Config Pack', price:12, method:'MonCash', time:'Jodi a, 13:47', status:'paid'},
+  {id:'ZF-88318', customer:'Amy Louis', email:'amy.louis@mail.com', product:'Auto-Deploy Bash Script', price:8, method:'PayPal', time:'Jodi a, 12:31', status:'pending'},
+  {id:'ZF-88317', customer:'Djems Val', email:'djems.val@mail.com', product:'Cinematic LUT Pack', price:9, method:'NatCash', time:'Jodi a, 11:09', status:'paid'},
+];
+
+let ADMIN_USERS = [
+  {name:'Sophia Jean', email:'sophia.j@mail.com', joined:'Mas 2025', premium:true, status:'active'},
+  {name:'Kenson Pierre', email:'kenson.p@mail.com', joined:'Jen 2025', premium:false, status:'active'},
+  {name:'Amy Louis', email:'amy.louis@mail.com', joined:'Fev 2024', premium:true, status:'active'},
+  {name:'Wilkens Noel', email:'wilkens.n@mail.com', joined:'Out 2023', premium:false, status:'banned'},
+];
+
+let ADMIN_COUPONS = [
+  {code:'ZF40OFF', discount:'40%', uses:214, active:true},
+  {code:'WELCOME10', discount:'10%', uses:980, active:true},
+  {code:'FLASHSALE', discount:'25%', uses:0, active:false},
+];
+
+let ADMIN_MESSAGES = [
+  {from:'Sophia Jean', msg:'Bonjou, mwen pa ka telechaje pwodwi a...', time:'10 min pase', unread:true},
+  {from:'Kenson Pierre', msg:'Mèsi anpil pou repons rapid nou an!', time:'2h pase', unread:false},
+  {from:'Amy Louis', msg:'Èske gen vèsyon Stripe pou Ayiti?', time:'5h pase', unread:true},
+];
+
+let EXCHANGE_RATE_HTG = 135; // 1 USD = 135 HTG — Admin ka chanje sa nan panel Admin (Dashboard)
+
+let state = { user:{name:'Marc Dorval', initials:'MD', premium:true}, currentPD:null, marketCat:'all', sortMode:'popular', darkExtra:false };
+
+/* ---------------- TOAST ---------------- */
+function toast(icon, msg){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className='toast';
+  el.innerHTML = `<span class="dot-red"></span><span>${icon?icon+' ':''}${msg}</span>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-10px)'; el.style.transition='.25s'; setTimeout(()=>el.remove(),250); }, 2600);
+}
+
+/* ---------------- AUTH ---------------- */
+function setAuthTab(tab){
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  ['login','register','forgot'].forEach(p=>document.getElementById('pane-'+p).classList.toggle('hidden', p!==tab));
+}
+const ADMIN_EMAIL = 'demonexes95@gmail.com';
+const ADMIN_PASS = '2009@';
+
+/* ---------------- SONJE MWEN (remember me) ----------------
+   Lè itilizatè a koche "Sonje mwen", session lan (non/imèl/rôl)
+   sove lokalman sou aparèy la (localStorage), pou aplikasyon an ka
+   rekonekte otomatikman pwochen fwa san yo pa oblije retape enfo yo. */
+const REMEMBER_KEY = 'zhuo_remember_session';
+function saveSession(user){
+  try{ localStorage.setItem(REMEMBER_KEY, JSON.stringify(user)); }catch(e){}
+}
+function clearSession(){
+  try{ localStorage.removeItem(REMEMBER_KEY); }catch(e){}
+}
+function loadSession(){
+  try{ const raw = localStorage.getItem(REMEMBER_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function isRememberChecked(){
+  const el = document.getElementById('rememberMe');
+  return !!(el && el.checked);
+}
+
+function login(){
+  const email = (document.getElementById('loginEmail').value||'').trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value||'';
+  const remember = isRememberChecked();
+  if(email===ADMIN_EMAIL.toLowerCase() && pass===ADMIN_PASS){
+    state.user = {name:'Admin', initials:'AD', premium:true, isAdmin:true, email};
+    if(remember) saveSession(state.user); else clearSession();
+    toast('🛡️','Koneksyon Admin reyisi! Byenveni.');
+    enterApp();
+    document.getElementById('adminMenuItem').classList.remove('hidden');
+    openView('admin');
+    return;
+  }
+  if(email===ADMIN_EMAIL.toLowerCase() && pass!==ADMIN_PASS){
+    toast('⛔','Modpas admin la pa bon');
+    return;
+  }
+  state.user = {name:'Marc Dorval', initials:'MD', premium:true, isAdmin:false, email};
+  if(remember) saveSession(state.user); else clearSession();
+  toast('✅','Koneksyon reyisi! Byenveni.');
+  enterApp();
+}
+function register(){ toast('📧','Kont kreye! Verifye imèl ou pou konfime.'); setTimeout(()=>{ toast('✔️','Imèl verifye (demo) — kont aktive'); state.user = {name:'Marc Dorval', initials:'MD', premium:true, isAdmin:false}; if(isRememberChecked()) saveSession(state.user); enterApp(); }, 1300); }
+function sendReset(){ toast('📩','Lyen reyajisteman voye nan imèl ou (demo)'); setAuthTab('login'); }
+function googleLogin(){ toast('🔵','Koneksyon Google reyisi (demo)'); state.user = {name:'Marc Dorval', initials:'MD', premium:true, isAdmin:false}; if(isRememberChecked()) saveSession(state.user); enterApp(); }
+function logout(){ clearSession(); document.getElementById('app').style.display='none'; document.getElementById('auth-screen').style.display='flex'; document.getElementById('adminMenuItem').classList.add('hidden'); document.getElementById('loginEmail').value=''; document.getElementById('loginPass').value=''; const rm=document.getElementById('rememberMe'); if(rm) rm.checked=false; setAuthTab('login'); toast('👋','Ou dekonekte'); }
+
+function renderProfile(){
+  const title = document.getElementById('profilePremiumTitle');
+  const sub = document.getElementById('profilePremiumSub');
+  const btn = document.getElementById('profilePremiumBtn');
+  if(!title) return;
+  if(state.user.premium && state.user.premiumExpiresAt){
+    title.textContent = 'Manm Premium Aktif';
+    sub.textContent = 'Ekspire '+new Date(state.user.premiumExpiresAt).toLocaleDateString()+' · Download rapid, pa gen reklam';
+    btn.textContent = 'Jere';
+  } else if(state.user.premium){
+    title.textContent = 'Manm Premium Aktif';
+    sub.textContent = 'Download rapid, pa gen reklam';
+    btn.textContent = 'Jere';
+  } else {
+    title.textContent = 'Ou pa Premium';
+    sub.textContent = 'Aktive Premium pou download rapid & san reklam';
+    btn.textContent = 'Vin Premium';
+  }
+}
+
+function enterApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('adminMenuItem').classList.toggle('hidden', !state.user.isAdmin);
+  document.getElementById('profileName').textContent = state.user.name;
+  document.getElementById('profileAvatar').textContent = state.user.initials;
+  const miniA=document.getElementById('miniProfileAvatar'); if(miniA) miniA.textContent=state.user.initials;
+  const miniN=document.getElementById('miniProfileName'); if(miniN) miniN.textContent=state.user.name;
+  const heroA=document.getElementById('heroAdminBubble'); if(heroA) heroA.textContent=state.user.initials;
+  renderAll();
+  renderProfile();
+}
+
+/* ---------------- VIEW NAV ---------------- */
+const VIEWS = ['home','notifications','profile','orders','downloads','wishlist','support','admin'];
+function openView(name){
+  if(!VIEWS.includes(name)){ name='home'; }
+  if(name==='admin' && !state.user.isAdmin){ toast('⛔','Sa a rezève pou administratè sèlman'); return; }
+  VIEWS.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden', v!==name));
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.nav===name));
+  window.scrollTo({top:0});
+  if(name==='orders') renderOrders();
+  if(name==='downloads') renderDownloads();
+  if(name==='wishlist') renderWishlist();
+  if(name==='notifications'){ markNotifsRead(); const d=document.getElementById('navUnreadDot'); if(d) d.classList.add('hidden'); }
+  if(name==='home'){ const d=document.getElementById('navUnreadDot'); if(d) d.classList.toggle('hidden', !state.notifications?.some?.(n=>!n.read)); }
+  if(name==='admin') renderAdmin();
+  if(name==='profile') renderProfile();
+}
+
+/* ---------------- APP PREFERENCES / SETTINGS ---------------- */
+const PREFS_KEY='zhuo_market_preferences_v2';
+let APP_PREFS={language:'Kreyòl',currency:'USD',reduceMotion:false,notifications:true,glass:true,compact:false};
+function loadPrefs(){try{const raw=localStorage.getItem(PREFS_KEY);if(raw)APP_PREFS={...APP_PREFS,...JSON.parse(raw)}}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PREFS_KEY,JSON.stringify(APP_PREFS))}catch(e){}}
+loadPrefs();
+function applyPrefs(){document.body.classList.toggle('reduce-motion',!!APP_PREFS.reduceMotion);document.body.classList.toggle('compact-ui',!!APP_PREFS.compact);document.documentElement.style.setProperty('--glass',APP_PREFS.glass?'rgba(255,255,255,.055)':'rgba(255,255,255,.025)');const st=document.getElementById('appearanceStatus');if(st)st.textContent=APP_PREFS.glass?'Liquid Glass aktive':'Glass redwi'}
+function togglePref(k){APP_PREFS[k]=!APP_PREFS[k];savePrefs();applyPrefs();renderSettingsSheet();toast('⚙️','Preferans mete ajou')}
+function setPref(k,v){APP_PREFS[k]=v;savePrefs();applyPrefs();renderSettingsSheet();toast('✅','Preferans mete ajou')}
+function resetPrefs(){APP_PREFS={language:'Kreyòl',currency:'USD',reduceMotion:false,notifications:true,glass:true,compact:false};savePrefs();applyPrefs();renderSettingsSheet();toast('↺','Paramèt retabli')}
+function openSettingsSheet(){renderSettingsSheet();showSheet('settingsOverlay')}
+function renderSettingsSheet(){const el=document.getElementById('settingsContent');if(!el)return;el.innerHTML=`<div style="display:flex;align-items:center;gap:11px;margin:8px 0 18px"><div class="profile-mini-avatar">${state.user.initials||'AD'}</div><div><h2 style="font-size:19px">Paramèt</h2><div style="font-size:11px;color:var(--muted)">Zhuo Market · Front-end mobile</div></div></div><div class="card" style="padding:14px;margin-bottom:13px"><div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:11px">Aparans</div><div class="settings-row"><div class="settings-icon">✨</div><div style="flex:1"><b style="font-size:13px">Apple Glass</b><div style="font-size:10.5px;color:var(--muted)">${APP_PREFS.glass?'Glows + transparans aktif':'Transparans redui'}</div></div><button class="toggle-switch ${APP_PREFS.glass?'on':''}" onclick="togglePref('glass')"></button></div><div class="settings-row"><div class="settings-icon">🎞️</div><div style="flex:1"><b style="font-size:13px">Animasyon redwi</b><div style="font-size:10.5px;color:var(--muted)">Pou aparèy ki pi fèb</div></div><button class="toggle-switch ${APP_PREFS.reduceMotion?'on':''}" onclick="togglePref('reduceMotion')"></button></div><div class="settings-row" style="border:0"><div class="settings-icon">▦</div><div style="flex:1"><b style="font-size:13px">Mòd kontra</b><div style="font-size:10.5px;color:var(--muted)">Kat yo pi konpak</div></div><button class="toggle-switch ${APP_PREFS.compact?'on':''}" onclick="togglePref('compact')"></button></div></div><div class="card" style="padding:14px;margin-bottom:13px"><div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:11px">Lang</div><div class="pref-grid">${['Kreyòl','Français','English'].map(v=>`<button class="pref-choice ${APP_PREFS.language===v?'active':''}" onclick="setPref('language','${v}')">${v}</button>`).join('')}</div></div><div class="card" style="padding:14px;margin-bottom:13px"><div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:11px">Deviz</div><div class="pref-grid">${['USD','HTG'].map(v=>`<button class="pref-choice ${APP_PREFS.currency===v?'active':''}" onclick="setPref('currency','${v}')">${v}</button>`).join('')}</div></div><div class="card" style="padding:14px;margin-bottom:13px"><div class="settings-row" style="border:0"><div class="settings-icon">🔔</div><div style="flex:1"><b style="font-size:13px">Notifikasyon</b><div style="font-size:10.5px;color:var(--muted)">Pwomosyon, acha ak support</div></div><button class="toggle-switch ${APP_PREFS.notifications?'on':''}" onclick="togglePref('notifications')"></button></div></div><div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="resetPrefs()">↺ Reset</button><button class="btn btn-primary" style="flex:1" onclick="closeSheet('settingsOverlay')">Fèmen</button></div>`}
+function renderSubscriptions(){const row=document.getElementById('subscriptionsRow');if(!row)return;const subs=[{name:'Netflix',initial:'N',price:'$8.99',grad:'linear-gradient(145deg,#e50914,#690006)',id:'p27'},{name:'Spotify',initial:'S',price:'$5.99',grad:'linear-gradient(145deg,#19d66a,#08783b)',id:'p28'},{name:'Prime Video',initial:'P',price:'$6.99',grad:'linear-gradient(145deg,#1da1ff,#1557b0)',id:'p29'},{name:'Disney+',initial:'D+',price:'$7.99',grad:'linear-gradient(145deg,#4737e8,#14105d)',id:'p30'}];row.innerHTML=subs.map(x=>`<div class="subscription-card" onclick="openProduct('${x.id}')"><div class="subscription-logo" style="background:${x.grad}">${x.initial}</div><div class="subscription-body"><div class="subscription-title">${x.name}</div><div class="subscription-meta">1 Mwa · ${x.price}</div></div></div>`).join('')}
+
+/* ---------------- HOME RENDER ---------------- */
+function renderCatChips(containerId, onClickFn, includeAll){
+  const el = document.getElementById(containerId);
+  let html='';
+  if(includeAll) html += `<div class="chip ${state.marketCat==='all'?'active':''}" onclick="selectMarketCat('all')">Tout</div>`;
+  CATS.forEach(c=>{
+    const isActive = includeAll ? state.marketCat===c.id : false;
+    html += `<div class="chip ${isActive?'active':''}" onclick="${onClickFn}('${c.id}')">${c.icon} ${c.label}</div>`;
+  });
+  el.innerHTML = html;
+}
+
+function pcardHTML(p){
+  const s = sellerMap[p.seller]; const c = catMap[p.cat];
+  const isPhone = p.cat === 'phone';
+  const icon = isPhone ? `<span class="phone-art">${p.icon}</span><span class="phone-grade"></span>` : p.icon;
+  return `<div class="pcard ${isPhone?'phone-card':''}" onclick="openProduct('${p.id}')">
+    <div class="pcard-img" style="background:${catBg(p.cat)}">
+      <span class="pcard-cat-tag" style="color:${c.color}">${isPhone?'📱 VENTE':c.icon+' '+c.label}</span>${icon}
+    </div>
+    <div class="pcard-body">
+      <div class="pcard-title">${p.title}</div>
+      <div class="pcard-seller">${isPhone?'Vendu par Zhuo Market':s.name}</div>
+      <div class="pcard-foot"><span class="pcard-price">$${p.price.toLocaleString()}</span><span class="pcard-rating">★ ${p.rating}</span></div>
+    </div>
+  </div>`;
+}
+function plistHTML(p){
+  const s = sellerMap[p.seller]; const c = catMap[p.cat];
+  return `<div class="plist-item" onclick="openProduct('${p.id}')">
+    <div class="plist-thumb" style="background:${catBg(p.cat)}">${p.icon}</div>
+    <div class="plist-info">
+      <div class="plist-title">${p.title}</div>
+      <div class="plist-meta">${s.name} · ⬇ ${p.downloads.toLocaleString()} · ★ ${p.rating} (${p.reviews})</div>
+      <div class="plist-foot"><span class="pcard-price">$${p.price}</span><span class="chip" style="padding:4px 10px;font-size:10px;color:${c.color};background:${c.color}22;border-color:transparent;">${c.icon} ${c.label}</span></div>
+    </div>
+  </div>`;
+}
+
+function renderHome(){
+  renderCatChips('homeCats','filterHomeCat', false);
+  const trending = [...PRODUCTS].sort((a,b)=>b.downloads-a.downloads).slice(0,6);
+  document.getElementById('trendingRow').innerHTML = trending.map(pcardHTML).join('');
+
+  document.getElementById('sellersRow').innerHTML = SELLERS.map(s=>`
+    <div class="seller-chip">
+      <div class="seller-avatar" style="background:linear-gradient(135deg,${s.color},#000)">
+        ${s.initials}${s.verified?'<span class="seller-verified">✓</span>':''}
+      </div>
+      <div class="seller-name">${s.name}</div>
+      <div style="font-size:10px;color:var(--gold);">★ ${s.rating}</div>
+    </div>`).join('');
+
+  const rec = [...PRODUCTS].sort((a,b)=>b.rating-a.rating).slice(3,9);
+  document.getElementById('recRow').innerHTML = rec.map(pcardHTML).join('');
+
+  const recent = [...PRODUCTS].slice(-5).reverse();
+  document.getElementById('recentList').innerHTML = recent.map(plistHTML).join('');
+}
+function filterHomeCat(catId){ state.marketCat = catId; openView('home'); renderMarket(); }
+
+/* ---------------- MARKET RENDER ---------------- */
+function selectMarketCat(id){ state.marketCat = id; renderMarket(); }
+function cycleSort(){
+  const modes = ['popular','price-low','price-high','rating'];
+  const labels = {popular:'⇅ Popilarite', 'price-low':'⇅ Pri ↑', 'price-high':'⇅ Pri ↓', rating:'⇅ Pi bon Nòt'};
+  state.sortMode = modes[(modes.indexOf(state.sortMode)+1)%modes.length];
+  document.getElementById('sortChip').textContent = labels[state.sortMode];
+  renderMarket();
+}
+function toggleFilterSheet(){const min=prompt('Pri minimòm (USD)','0');if(min===null)return;const max=prompt('Pri maksimòm (USD)','9999');if(max===null)return;state.priceFilter={min:parseFloat(min)||0,max:parseFloat(max)||999999};renderMarket();toast('⚙️','Filtè aplike');}
+
+function renderMarket(){
+  renderCatChips('marketCats','selectMarketCat', true);
+  let list = state.marketCat==='all' ? [...PRODUCTS] : PRODUCTS.filter(p=>p.cat===state.marketCat);
+  if(state.priceFilter) list=list.filter(p=>p.price>=state.priceFilter.min && p.price<=state.priceFilter.max);
+  if(state.sortMode==='popular') list.sort((a,b)=>b.downloads-a.downloads);
+  if(state.sortMode==='price-low') list.sort((a,b)=>a.price-b.price);
+  if(state.sortMode==='price-high') list.sort((a,b)=>b.price-a.price);
+  if(state.sortMode==='rating') list.sort((a,b)=>b.rating-a.rating);
+  document.getElementById('marketList').innerHTML = list.length ? list.map(plistHTML).join('') :
+    `<div class="empty-state"><div class="es-ic">🕳️</div>Pa gen pwodwi nan kategori sa a</div>`;
+}
+
+let RECENT_SEARCHES = [];
+const TRENDING_SEARCHES = ['Discord config','UI Kit','Bot Telegram','Free Fire','Bash script'];
+function onSearch(q){
+  q = q.trim().toLowerCase();
+  if(!q){ document.getElementById('searchSuggest').classList.add('hidden'); openView('home'); renderMarket(); return; }
+  openView('home');
+  const list = PRODUCTS.filter(p=> p.title.toLowerCase().includes(q) || catMap[p.cat].label.toLowerCase().includes(q));
+  document.getElementById('marketList').innerHTML = list.length ? list.map(plistHTML).join('') :
+    `<div class="empty-state"><div class="es-ic">🔍</div>Pa gen rezilta pou "${q}"</div>`;
+  document.getElementById('marketCats').innerHTML='';
+  renderSearchSuggestions(q);
+}
+function renderSearchSuggestions(q){
+  const box = document.getElementById('searchSuggest');
+  const matches = PRODUCTS.filter(p=>p.title.toLowerCase().includes(q)).slice(0,5);
+  if(!matches.length){ box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  box.innerHTML = `<div style="font-size:10px;color:var(--muted-2);text-transform:uppercase;margin-bottom:6px;">🧠 Sijesyon AI</div>` +
+    matches.map(m=>`<div style="padding:8px 4px;font-size:12.5px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);" onclick="document.getElementById('searchInput').value='${m.title.replace(/'/g,"\\'")}';onSearch('${m.title.replace(/'/g,"\\'")}');document.getElementById('searchSuggest').classList.add('hidden');openProduct('${m.id}')">🔍 ${m.title}</div>`).join('');
+}
+function showSearchSuggestions(){
+  const box = document.getElementById('searchSuggest');
+  const q = document.getElementById('searchInput').value.trim();
+  if(q){ renderSearchSuggestions(q.toLowerCase()); return; }
+  box.classList.remove('hidden');
+  box.innerHTML = `
+    ${RECENT_SEARCHES.length ? `<div style="font-size:10px;color:var(--muted-2);text-transform:uppercase;margin-bottom:6px;">Rechèch resan</div>
+    ${RECENT_SEARCHES.map(r=>`<div style="padding:7px 4px;font-size:12.5px;cursor:pointer;" onclick="document.getElementById('searchInput').value='${r}';onSearch('${r}')">🕓 ${r}</div>`).join('')}` : ''}
+    <div style="font-size:10px;color:var(--muted-2);text-transform:uppercase;margin:8px 0 6px;">🔥 Tandans</div>
+    ${TRENDING_SEARCHES.map(t=>`<div style="padding:7px 4px;font-size:12.5px;cursor:pointer;" onclick="document.getElementById('searchInput').value='${t}';onSearch('${t}')">📈 ${t}</div>`).join('')}
+  `;
+  document.addEventListener('click', function closeIt(e){
+    if(!e.target.closest('.topbar-search')){ box.classList.add('hidden'); document.removeEventListener('click', closeIt); }
+  });
+}
+function voiceSearchDemo(){ toast('🎙️','Rechèch vokal ap koute... (demo — mande pèmisyon mikwo nan pwodiksyon)'); }
+
+/* ---------------- PRODUCT DETAIL ---------------- */
+function qualityScore(p){
+  // Heuristik senp: mele evalyasyon, kantite download, ak kantite evalyasyon
+  const s = Math.round(Math.min(100, (p.rating/5*55) + Math.min(30, p.downloads/200) + Math.min(15, p.reviews/20)));
+  return s;
+}
+function trustScore(seller){
+  const s = Math.round(Math.min(100, seller.rating/5*80 + (seller.verified?20:5)));
+  return s;
+}
+function relatedProducts(p){
+  return PRODUCTS.filter(x=>x.id!==p.id && x.cat===p.cat).slice(0,4);
+}
+function openProduct(id){
+  const p = PRODUCTS.find(x=>x.id===id); const s = sellerMap[p.seller]; const c = catMap[p.cat];
+  state.currentPD = id;
+  const reviews = [
+    {name:'Jessy A.', stars:5, text:'Excellent pwodwi, enstalasyon te fasil e sipò a te rapid!'},
+    {name:'Naïka R.', stars:5, text:'Kalite premium, mèsi anpil pou travay la.'},
+    {name:'Louis M.', stars:4, text:'Bon pwodwi, ta renmen wè plis dokimantasyon.'},
+  ];
+  const qScore = qualityScore(p); const tScore = trustScore(s);
+  const related = relatedProducts(p);
+  const priceHistory = [ (p.price*1.25).toFixed(0), (p.price*1.1).toFixed(0), p.price ];
+  document.getElementById('pdContent').innerHTML = `
+    <div class="pd-hero" style="background:${catBg(p.cat)}">${p.icon}</div>
+    <div class="pd-body">
+      <div class="pd-cat" style="color:${c.color}">${c.icon} ${c.label}</div>
+      <div class="pd-title">${p.title}</div>
+      <div class="pd-meta-row">
+        <span>★ ${p.rating} (${p.reviews} evalyasyon)</span>
+        <span>⬇ ${p.downloads.toLocaleString()} download</span>
+      </div>
+      <div class="pd-seller-row">
+        <div class="seller-avatar" style="width:42px;height:42px;font-size:15px;background:linear-gradient(135deg,${s.color},#000)">${s.initials}${s.verified?'<span class="seller-verified" style="width:15px;height:15px;font-size:8px;">✓</span>':''}</div>
+        <div style="flex:1;"><div style="font-weight:700;font-size:13.5px;">${s.name}</div><div style="font-size:11px;color:var(--muted);">★ ${s.rating} · Vandè verifye</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="toast('👤','Pwofil vandè ouvri (demo)')">Vizite</button>
+      </div>
+      <div class="pd-price-row">
+        <div><div class="pd-price">$${p.price}.00</div><div style="font-size:11px;color:var(--muted-2);">Peman inik · Aksè avi</div></div>
+        <button class="btn btn-outline-red btn-sm" onclick="toggleWishlist('${p.id}')" id="wishBtn">${WISHLIST.includes(p.id)?'💛 Nan Wishlist':'🤍 Ajoute Wishlist'}</button>
+      </div>
+      <div class="pd-desc">${p.desc} <span class="pill" style="background:rgba(255,19,56,0.12);color:var(--red-2);margin-left:4px;">🧠 AI</span></div>
+
+      <div style="display:flex;gap:8px;margin:14px 0;">
+        <div class="card" style="flex:1;padding:10px;text-align:center;">
+          <div style="font-size:10.5px;color:var(--muted);">Kalite Pwodwi</div>
+          <div style="font-weight:800;font-size:16px;color:${qScore>=80?'var(--green)':qScore>=55?'var(--gold)':'var(--red-2)'}">${qScore}/100</div>
+        </div>
+        <div class="card" style="flex:1;padding:10px;text-align:center;">
+          <div style="font-size:10.5px;color:var(--muted);">Konfyans Vandè</div>
+          <div style="font-weight:800;font-size:16px;color:${tScore>=80?'var(--green)':tScore>=55?'var(--gold)':'var(--red-2)'}">${tScore}/100</div>
+        </div>
+        <div class="card" style="flex:1;padding:10px;text-align:center;">
+          <div style="font-size:10.5px;color:var(--muted);">Popilarite</div>
+          <div style="font-weight:800;font-size:16px;">${p.downloads>3000?'🔥 Wo':p.downloads>1000?'📈 Mwayen':'🌱 Nouvo'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;font-size:11px;color:var(--muted);margin-bottom:14px;">
+        <span>📦 Stock: Disponib</span>
+        <span>🚚 Livrezon: Enstan (dijital)</span>
+        <span>💲 Istwa pri: $${priceHistory.join(' → $')}</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('⚖️','Ajoute nan konparezon (demo)')">⚖️ Konpare</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('📤','Lyen pataje kopye (demo)')">📤 Pataje</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('🚩','Rapò voye bay ZHUO CORE (demo)')">🚩 Rapòte</button>
+      </div>
+
+      <div class="section-head" style="margin-top:0;"><h3 style="font-size:14.5px;">Evalyasyon Kliyan</h3></div>
+      ${reviews.map(r=>`<div class="review-item"><div class="review-head"><div class="review-avatar" style="background:linear-gradient(135deg,#333,#111)">${r.name[0]}</div><div style="flex:1;"><div style="font-weight:700;font-size:12.5px;">${r.name}</div><div class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div></div></div><div style="font-size:12.5px;color:#c9c9d1;line-height:1.5;">${r.text}</div></div>`).join('')}
+
+      ${related.length ? `<div class="section-head"><h3 style="font-size:14.5px;">🧠 AI Rekòmande pou ou tou</h3></div>
+      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;">
+        ${related.map(r=>`<div class="card" style="min-width:120px;padding:10px;cursor:pointer;" onclick="openProduct('${r.id}')">
+          <div style="width:100%;height:60px;border-radius:10px;background:${catBg(r.cat)};display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:6px;">${r.icon}</div>
+          <div style="font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title}</div>
+          <div style="font-size:10.5px;color:var(--muted);">$${r.price}</div>
+        </div>`).join('')}
+      </div>` : ''}
+    </div>
+    <div class="pd-cta-bar">
+      <button class="btn btn-ghost" style="flex:1" onclick="addToCart('${p.id}')">🛒 Panye</button>
+      <button class="btn btn-primary" style="flex:1.4" onclick="buyNow('${p.id}')">Achte Kounye a</button>
+    </div>
+  `;
+  showSheet('pdOverlay');
+}
+function toggleWishlist(id){
+  if(WISHLIST.includes(id)){ WISHLIST = WISHLIST.filter(x=>x!==id); toast('💔','Retire nan wishlist'); }
+  else{ WISHLIST.push(id); toast('💛','Ajoute nan wishlist'); }
+  document.getElementById('wishBtn').innerHTML = WISHLIST.includes(id)?'💛 Nan Wishlist':'🤍 Ajoute Wishlist';
+  document.getElementById('statWishlist').textContent = WISHLIST.length;
+}
+
+/* ---------------- CART ---------------- */
+function addToCart(id){
+  const existing = CART.find(c=>c.product===id);
+  if(existing) existing.qty++; else CART.push({product:id, qty:1});
+  toast('🛒','Ajoute nan panye');
+  renderCartBadge();
+}
+function buyNow(id){
+  closeSheet('pdOverlay');
+  openCheckout([{product:id, qty:1}]);
+}
+function removeFromCart(id){ CART = CART.filter(c=>c.product!==id); renderCart(); toast('🗑️','Retire nan panye'); }
+function changeQty(id, delta){
+  const it = CART.find(c=>c.product===id); if(!it) return;
+  it.qty += delta; if(it.qty<=0){ removeFromCart(id); return; }
+  renderCart();
+}
+function cartTotal(items){ return items.reduce((sum,c)=>{ const p=PRODUCTS.find(x=>x.id===c.product); return sum + p.price*c.qty; },0); }
+
+function renderCart(){
+  renderCartBadge();
+  if(!CART.length){
+    document.getElementById('cartList').innerHTML = `<div class="empty-state"><div class="es-ic">🛒</div>Panye ou vid<br><button class="btn btn-primary btn-sm" style="margin-top:16px;" onclick="openView('home')">Ale nan Marketplace</button></div>`;
+    document.getElementById('cartSummaryWrap').innerHTML='';
+    return;
+  }
+  document.getElementById('cartList').innerHTML = CART.map(c=>{
+    const p = PRODUCTS.find(x=>x.id===c.product);
+    return `<div class="cart-item">
+      <div class="plist-thumb" style="background:${catBg(p.cat)}">${p.icon}</div>
+      <div style="flex:1;">
+        <div class="plist-title">${p.title}</div>
+        <div class="plist-meta">$${p.price} x ${c.qty}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="qty-x" onclick="changeQty('${p.id}',-1)">−</button>
+        <span style="font-weight:700;font-size:13px;">${c.qty}</span>
+        <button class="qty-x" onclick="changeQty('${p.id}',1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const subtotal = cartTotal(CART); const fee = +(subtotal*0.03).toFixed(2); const total = +(subtotal+fee).toFixed(2);
+  document.getElementById('cartSummaryWrap').innerHTML = `
+    <div class="card" style="padding:18px;margin-top:16px;">
+      <div class="summary-row"><span>Sou-total</span><span>$${subtotal.toFixed(2)}</span></div>
+      <div class="summary-row"><span>Frè sèvis (3%)</span><span>$${fee.toFixed(2)}</span></div>
+      <div class="summary-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="openCheckout(CART)">Kontinye Checkout →</button>
+    </div>`;
+}
+function renderCartBadge(){
+  const count = CART.reduce((s,c)=>s+c.qty,0);
+  const el = document.getElementById('cartCount');
+  el.textContent = count; el.classList.toggle('hidden', count===0);
+}
+
+/* ---------------- CHECKOUT ---------------- */
+let checkoutItems = []; let selectedPay = null;
+function openCheckout(items){
+  checkoutItems = items; selectedPay = enabledGateways()[0]?.id || null;
+  renderCheckoutSheet();
+  showSheet('coOverlay');
+}
+function isGourdesPay(){ return selectedPay==='moncash' || selectedPay==='natcash'; }
+function fmtHTG(usd){ return Math.round(usd*EXCHANGE_RATE_HTG).toLocaleString('en-US'); }
+
+function renderCheckoutSheet(){
+  const subtotal = cartTotal(checkoutItems); const fee=+(subtotal*0.03).toFixed(2); const total=+(subtotal+fee).toFixed(2);
+  const gourdes = isGourdesPay();
+  const gateways = enabledGateways();
+  document.getElementById('coContent').innerHTML = `
+    <h2 style="font-size:19px;margin:8px 0 16px;">Checkout</h2>
+    <div class="section-head" style="margin:0 0 10px;"><h3 style="font-size:13.5px;">Metòd Peman</h3></div>
+    ${gateways.length===0 ? `<div style="font-size:12px;color:var(--muted);padding:10px 0;">Okenn metòd peman aktif kounye a — Admin dwe aktive youn nan panel 💳 Peman.</div>` :
+      gateways.map(g=>`
+      <div class="pay-method ${selectedPay===g.id?'selected':''}" onclick="selectPay('${g.id}')">
+        <div class="pay-icon" style="background:rgba(255,255,255,0.06);">${g.icon}</div>
+        <div style="flex:1;"><div style="font-weight:700;font-size:13.5px;">${g.label}</div><div style="font-size:11px;color:var(--muted);">${g.note}</div></div>
+        <div style="width:20px;height:20px;border-radius:50%;border:2px solid ${selectedPay===g.id?'var(--red)':'rgba(255,255,255,0.2)'};display:flex;align-items:center;justify-content:center;">${selectedPay===g.id?'<div style="width:10px;height:10px;border-radius:50%;background:var(--red);"></div>':''}</div>
+      </div>`).join('')}
+    <div class="card" style="padding:16px;margin:16px 0;">
+      <div class="summary-row"><span>Sou-total</span><span>$${subtotal.toFixed(2)}</span></div>
+      <div class="summary-row"><span>Frè sèvis</span><span>$${fee.toFixed(2)}</span></div>
+      <div class="summary-row total"><span>Total a peye</span><span>$${total.toFixed(2)}</span></div>
+      ${gourdes ? `<div class="summary-row" style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,0.12);color:var(--gold);"><span>💱 Ekivalan an Goud (taux 1$ = ${EXCHANGE_RATE_HTG} HTG)</span><span style="font-weight:800;">${fmtHTG(total)} HTG</span></div>` : ''}
+    </div>
+    <button class="btn btn-primary" style="width:100%;" ${gateways.length===0?'disabled':''} onclick="confirmPayment(${total})">🔒 Peye ${gourdes ? fmtHTG(total)+' HTG' : '$'+total.toFixed(2)} kounye a</button>
+    <div style="text-align:center;font-size:10.5px;color:var(--muted-2);margin-top:10px;">Peman kripte & sekirize · Ou dakò ak Kondisyon Sèvis</div>
+  `;
+}
+function selectPay(id){ selectedPay=id; renderCheckoutSheet(); }
+
+function confirmPayment(total){
+  if(!selectedPay) return;
+  const gourdes = isGourdesPay();
+  const displayAmount = gourdes ? fmtHTG(total)+' HTG' : '$'+total.toFixed(2);
+  const btn = event.target; btn.innerHTML = '⏳ Ap verifye peman...'; btn.style.opacity='0.7';
+  setTimeout(()=>{
+    const result = verifyPaymentTransaction(selectedPay, total, state.user.email||state.user.name);
+    if(!result.ok){
+      btn.innerHTML = '🔒 Peye kounye a'; btn.style.opacity='1';
+      toast('❌','Paiement échoué. Veuillez réessayer.');
+      return;
+    }
+    closeSheet('coOverlay');
+    const g = GATEWAY_REGISTRY.find(x=>x.id===selectedPay);
+    // create order records
+    const orderId = 'ZF-'+Math.floor(80000+Math.random()*9999);
+    checkoutItems.forEach(it=>{
+      const p = PRODUCTS.find(x=>x.id===it.product);
+      ORDERS.unshift({id:orderId, product:p.id, date:'Jodi a', price:p.price, method:g.label, status:'paid', txId:result.txId});
+      DOWNLOADS.unshift({product:p.id, date:'Jodi a', size:(Math.floor(Math.random()*120)+5)+' MB'});
+    });
+    CART = CART.filter(c=>!checkoutItems.some(ci=>ci.product===c.product));
+    NOTIFS.unshift({ic:'💳', title:'Acha konfime', body:`Kòmand ${orderId} konfime — ${displayAmount}`, time:'Kounye a', unread:true});
+    // simulate admin alert
+    ADMIN_ORDERS.unshift({id:orderId, customer:state.user.name, email:'marc.dorval@gmail.com', product: PRODUCTS.find(x=>x.id===checkoutItems[0].product).title, price:total, displayAmount:displayAmount, method:g.label, time:'Kounye a', status:'paid'});
+    renderCartBadge(); renderNotifDot();
+    toast('✅','Paiement confirmé.');
+    showReceipt(orderId, total, displayAmount);
+  }, 1400);
+}
+function showReceipt(orderId, total, displayAmount){
+  document.getElementById('rcContent').innerHTML = `
+    <div style="font-size:52px;margin:22px 0 6px;">✅</div>
+    <h2 style="font-size:20px;margin-bottom:6px;">Peman Reyisi!</h2>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Resi voye nan imèl ou · Admin resevwa alèt otomatikman</div>
+    <div class="card" style="padding:16px;text-align:left;margin-bottom:20px;">
+      <div class="summary-row"><span>Kòmand ID</span><span style="font-weight:700;color:var(--text);">${orderId}</span></div>
+      <div class="summary-row"><span>Total Peye</span><span style="font-weight:700;color:var(--text);">${displayAmount}</span></div>
+      <div class="summary-row"><span>Estati</span><span class="status-tag status-paid">Peye</span></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="closeSheet('rcOverlay'); openView('downloads');">⬇️ Ale Telechaje</button>
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:14px;" onclick="closeSheet('rcOverlay')">Fèmen</button>
+  `;
+  showSheet('rcOverlay');
+  toast('🔔','Admin resevwa notifikasyon kòmand nouvo!');
+}
+
+/* ---------------- SHEETS ---------------- */
+function showSheet(id){ document.getElementById(id).classList.add('show'); }
+function closeSheet(id){ document.getElementById(id).classList.remove('show'); renderCart(); }
+
+/* ---------------- NOTIFICATIONS ---------------- */
+function renderNotifDot(){
+  const hasUnread = NOTIFS.some(n=>n.unread);
+  document.getElementById('notifDot').classList.toggle('hidden', !hasUnread);
+}
+function renderNotifs(){
+  document.getElementById('notifList').innerHTML = NOTIFS.map(n=>`
+    <div class="notif-item ${n.unread?'unread':'read'}">
+      <div class="notif-ic" style="background:rgba(255,255,255,0.06);">${n.ic}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:13px;">${n.title}</div>
+        <div style="font-size:12px;color:var(--muted);margin:2px 0 4px;">${n.body}</div>
+        <div style="font-size:10.5px;color:var(--muted-2);">${n.time}</div>
+      </div>
+    </div>`).join('');
+}
+function markNotifsRead(){ NOTIFS.forEach(n=>n.unread=false); renderNotifs(); renderNotifDot(); }
+
+/* ---------------- PROFILE SUB VIEWS ---------------- */
+function renderOrders(){
+  document.getElementById('ordersList').innerHTML = ORDERS.map(o=>{
+    const p = PRODUCTS.find(x=>x.id===o.product);
+    return `<div class="plist-item" style="cursor:default;">
+      <div class="plist-thumb" style="background:${catBg(p.cat)}">${p.icon}</div>
+      <div style="flex:1;">
+        <div class="plist-title">${p.title}</div>
+        <div class="plist-meta">${o.id} · ${o.date} · ${o.method}</div>
+        <div class="plist-foot"><span class="pcard-price">$${o.price}</span><span class="status-tag status-paid">Peye</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderDownloads(){
+  document.getElementById('downloadsList').innerHTML = DOWNLOADS.map(d=>{
+    const p = PRODUCTS.find(x=>x.id===d.product);
+    return `<div class="plist-item" onclick="toast('⬇️','Telechajman kòmanse (demo)')">
+      <div class="plist-thumb" style="background:${catBg(p.cat)}">${p.icon}</div>
+      <div style="flex:1;">
+        <div class="plist-title">${p.title}</div>
+        <div class="plist-meta">${d.date} · ${d.size}</div>
+      </div>
+      <button class="btn btn-outline-red btn-sm">⬇ Download</button>
+    </div>`;
+  }).join('');
+}
+function renderWishlist(){
+  const list = PRODUCTS.filter(p=>WISHLIST.includes(p.id));
+  document.getElementById('wishlistList').innerHTML = list.length ? list.map(plistHTML).join('') : `<div class="empty-state"><div class="es-ic">💛</div>Wishlist ou vid</div>`;
+}
+
+/* ---------------- SUPPORT ---------------- */
+let chatLog = [
+  {from:'admin', text:'Bonjou! Byenveni nan Support Zhuo Fan. Kijan m ka ede w jodi a?'},
+];
+function setSupportTab(el, tab){
+  document.querySelectorAll('#view-support .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  ['chat','tickets','faq'].forEach(t=>document.getElementById('support-'+t).classList.toggle('hidden', t!==tab));
+  if(tab==='chat') renderChat();
+  if(tab==='tickets') renderTickets();
+  if(tab==='faq') renderFAQ();
+}
+function renderChat(){
+  document.getElementById('chatBox').innerHTML = chatLog.map(m=>`<div class="chat-bubble ${m.from==='user'?'chat-user':'chat-admin'}">${m.text}</div>`).join('');
+  document.getElementById('chatBox').scrollTop = 999999;
+}
+async function sendChat(){
+  const inp = document.getElementById('chatInput'); const val = inp.value.trim(); if(!val) return;
+  chatLog.push({from:'user', text:val}); inp.value=''; renderChat();
+  chatLog.push({from:'admin', text:'⏳ ZHUO CORE ap ekri...', pending:true}); renderChat();
+  const prompt = `Ou se asistan sipò kliyan pou yon marketplace ki rele Zhuo Market. Reponn kout, an Kreyòl Ayisyen, e ede kliyan sa a: "${val}"`;
+  const demo = 'Mèsi pou mesaj ou! Yon ajan ap reponn ou byento (repons demo — konfigire yon kle AI nan Admin → AI pou repons reyèl ZHUO CORE).';
+  const result = await zhuoCore('support-chat', prompt, demo);
+  chatLog = chatLog.filter(m=>!m.pending);
+  chatLog.push({from:'admin', text: result.text + (result.live ? ` <span style="opacity:.5;font-size:10px;">(${result.provider})</span>` : '')});
+  renderChat();
+}
+function attachDemo(kind){ toast(kind==='screenshot'?'📷':'🖼️', (kind==='screenshot'?'Screenshot':'Imaj')+' anekse (demo)'); }
+function renderTickets(){
+  document.getElementById('support-tickets').innerHTML = `
+    <button class="btn btn-outline-red btn-sm" style="margin-bottom:14px;" onclick="toast('🎫','Nouvo tikè kreye (demo)')">+ Nouvo Tikè</button>
+    ${TICKETS.map(t=>`<div class="admin-row"><div style="flex:1;"><div style="font-weight:700;font-size:13px;">${t.subject}</div><div style="font-size:11px;color:var(--muted-2);">${t.id} · ${t.date}</div></div><span class="status-tag status-${t.status==='paid'?'paid':'pending'}">${t.status==='paid'?'Rezoud':'Ap tann'}</span></div>`).join('')}
+  `;
+}
+const FAQS = [
+  {q:'Kijan mwen telechaje yon pwodwi apre m achte l?', a:'Ale nan Pwofil → Download History, epi klike bouton "Download" bò kote pwodwi a.'},
+  {q:'Ki metòd peman nou aksepte?', a:'Nou aksepte Stripe, PayPal, MonCash, NatCash, ak Kat Kredi/Debi dirèkteman.'},
+  {q:'Èske mwen ka mande ranbousman?', a:'Wi, kreye yon tikè support nan 7 jou apre acha a, ekip nou ap trete demand lan.'},
+  {q:'Kijan pou m vin yon vandè?', a:'Kontakte support pou aktive kont vandè, apre sa ou ka soumèt pwodwi pou apwobasyon admin.'},
+];
+function renderFAQ(){
+  document.getElementById('support-faq').innerHTML = FAQS.map((f,i)=>`
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">${f.q}<span>+</span></div>
+      <div class="faq-a">${f.a}</div>
+    </div>`).join('');
+}
+
+/* ---------------- ADMIN ---------------- */
+function setAdminTab(el, tab){
+  document.querySelectorAll('#view-admin .admin-tabs .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  ['dash','products','orders','users','coupons','messages','payments','ai'].forEach(t=>document.getElementById('admin-'+t).classList.toggle('hidden', t!==tab));
+  if(tab==='ai'){ renderAiProviders(); renderFraudFlags(); renderAiLogs(); }
+  if(tab==='payments'){ renderPaymentGateways(); }
+}
+function renderAiProviders(){
+  document.getElementById('aiProvidersList').innerHTML = Object.entries(ZHUO_CORE_CONFIG.providers).map(([id,p])=>`
+    <div class="admin-row" style="align-items:center;">
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:12.5px;">${p.label}</div>
+        <input type="password" placeholder="Kle API ${p.label}..." value="${p.key}" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:8px 10px;font-size:11.5px;margin-top:4px;" oninput="ZHUO_CORE_CONFIG.providers['${id}'].key=this.value; saveAiConfig();">
+      </div>
+      <button class="btn ${p.enabled?'btn-outline-red':'btn-ghost'} btn-sm" onclick="ZHUO_CORE_CONFIG.providers['${id}'].enabled=!ZHUO_CORE_CONFIG.providers['${id}'].enabled; saveAiConfig(); renderAiProviders(); toast('🧠','${p.label} '+(ZHUO_CORE_CONFIG.providers['${id}'].enabled?'aktive':'dezaktive'))">${p.enabled?'Aktif':'Off'}</button>
+    </div>`).join('');
+  document.getElementById('aiDefaultProvider').value = ZHUO_CORE_CONFIG.defaultProvider;
+}
+function renderAiLogs(){
+  const el = document.getElementById('adminAiLogs'); if(!el) return;
+  el.innerHTML = AI_LOGS.length ? AI_LOGS.map(l=>`<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+    <span style="color:${l.ok?'var(--green)':'var(--red-2)'}">${l.ok?'●':'●'}</span>
+    <b>${l.provider}</b> · ${l.feature} · <span style="color:var(--muted-2);">${l.time}</span><br>
+    <span style="color:var(--muted);">${l.note}</span></div>`).join('')
+    : `<div style="color:var(--muted-2);">Pa gen aktivite AI ankò.</div>`;
+}
+/* Heuristik lokal (senp) pou detekte pwodwi doub ak pri sispèk —
+   yon vrè sistèm fwod backend ta analize plis siyal (kont, IP, elt). */
+function renderFraudFlags(){
+  const flags = [];
+  const seenTitles = {};
+  PRODUCTS.forEach(p=>{
+    const key = p.title.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(seenTitles[key]) flags.push(`⚠️ Posib doub: "${p.title}" sanble ak "${seenTitles[key]}"`);
+    seenTitles[key] = p.title;
+    if(p.price < 3) flags.push(`💸 Pri sispèk ba: "${p.title}" ($${p.price})`);
+  });
+  document.getElementById('adminFraudList').innerHTML = flags.length ? flags.map(f=>`<div style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06);">${f}</div>`).join('')
+    : `<div style="color:var(--muted-2);">Okenn siyal fwod detekte kounye a. ✅</div>`;
+}
+function renderAdmin(){
+  const chart = document.getElementById('salesChart');
+  const vals = [42,68,55,80,64,90,73];
+  chart.innerHTML = vals.map(v=>`<div class="bar" style="height:${v}%;" title="$${v*38}"></div>`).join('');
+
+  document.getElementById('adminProductsList').innerHTML = PRODUCTS.map(p=>{
+    const c = catMap[p.cat];
+    return `<div class="admin-row">
+      <div class="plist-thumb" style="width:44px;height:44px;font-size:19px;background:${catBg(p.cat)}">${p.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</div>
+        <div style="font-size:10.5px;color:var(--muted-2);">${c.label} · $${p.price} · ⬇${p.downloads}</div>
+      </div>
+      <button class="icon-btn" style="width:32px;height:32px;" onclick="adminEditProduct('${p.id}')">✏️</button>
+      <button class="icon-btn" style="width:32px;height:32px;" onclick="adminDeleteProduct('${p.id}')">🗑️</button>
+    </div>`;
+  }).join('');
+
+  document.getElementById('adminOrdersList').innerHTML = ADMIN_ORDERS.map(o=>`
+    <div class="admin-row" style="align-items:flex-start;">
+      <div style="font-size:20px;">🔔</div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;"><b style="font-size:12.5px;">${o.customer}</b><span class="status-tag status-${o.status==='paid'?'paid':'pending'}">${o.status==='paid'?'Peye':'Ap tann'}</span></div>
+        <div style="font-size:11.5px;color:var(--muted);margin:3px 0;">${o.product} · ${o.displayAmount || '$'+o.price}</div>
+        <div style="font-size:10.5px;color:var(--muted-2);">${o.id} · ${o.method} · ${o.time} · ${o.email}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('adminUsersList').innerHTML = ADMIN_USERS.map((u,i)=>`
+    <div class="admin-row">
+      <div class="seller-avatar" style="width:38px;height:38px;font-size:14px;background:linear-gradient(135deg,#444,#111);">${u.name[0]}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:12.5px;">${u.name} ${u.premium?'<span class="badge-premium" style="margin-left:4px;">VIP</span>':''}</div>
+        <div style="font-size:10.5px;color:var(--muted-2);">${u.email} · Manm depi ${u.joined}</div>
+      </div>
+      ${u.status==='banned' ? `<span class="status-tag status-banned">Bloke</span>` : `<button class="btn btn-ghost btn-sm" onclick="adminBanUser(${i})">Bloke</button>`}
+    </div>`).join('');
+
+  document.getElementById('adminCouponsList').innerHTML = ADMIN_COUPONS.map((c,i)=>`
+    <div class="admin-row">
+      <div style="font-size:20px;">🏷️</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:13px;font-family:'Courier New',monospace;">${c.code}</div>
+        <div style="font-size:11px;color:var(--muted-2);">${c.discount} rabè · ${c.uses} itilizasyon</div>
+      </div>
+      <button class="btn ${c.active?'btn-outline-red':'btn-ghost'} btn-sm" onclick="adminToggleCoupon(${i})">${c.active?'Aktif':'Dezaktive'}</button>
+    </div>`).join('');
+
+  document.getElementById('adminMessagesList').innerHTML = ADMIN_MESSAGES.map(m=>`
+    <div class="admin-row" style="align-items:flex-start;cursor:pointer;" onclick="toast('💬','Konvèsasyon ouvri (demo)')">
+      <div class="seller-avatar" style="width:38px;height:38px;font-size:14px;background:linear-gradient(135deg,#444,#111);">${m.from[0]}</div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;"><b style="font-size:12.5px;">${m.from}</b>${m.unread?'<span class="dot-red"></span>':''}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin:3px 0;">${m.msg}</div>
+        <div style="font-size:10px;color:var(--muted-2);">${m.time}</div>
+      </div>
+    </div>`).join('');
+}
+function adminAddProduct(){
+  document.getElementById('apSeed').value='';
+  document.getElementById('apTitle').value='';
+  document.getElementById('apPrice').value='';
+  document.getElementById('apDesc').value='';
+  document.getElementById('apTags').textContent='';
+  showSheet('apOverlay');
+}
+async function aiGenerateTitle(){
+  const seed = document.getElementById('apSeed').value.trim() || 'yon pwodwi dijital premium';
+  const demo = seed.charAt(0).toUpperCase()+seed.slice(1)+' — Édition Premium';
+  const r = await zhuoCore('title-generator', `Kreye YON sèl tit kout e vandè pou yon pwodwi dijital sou baz: "${seed}". Reponn ak sèlman tit la, san gide.`, demo);
+  document.getElementById('apTitle').value = r.text.trim().split('\n')[0].replace(/^["']|["']$/g,'');
+  toast('✨', r.live ? `Tit AI jenere (${r.provider})` : 'Tit jenere (mòd demo)');
+}
+async function aiGenerateDesc(){
+  const seed = document.getElementById('apSeed').value.trim() || document.getElementById('apTitle').value || 'pwodwi dijital';
+  const demo = `Yon ${seed} kalite premium, byen dokimante, ak sipò rapid apre acha. Enstalasyon senp ak rezilta pwofesyonèl.`;
+  const r = await zhuoCore('description-generator', `Ekri yon deskripsyon vandè 2-3 fraz an Kreyòl Ayisyen pou pwodwi dijital sa a: "${seed}".`, demo);
+  document.getElementById('apDesc').value = r.text.trim();
+  toast('✨', r.live ? `Deskripsyon AI jenere (${r.provider})` : 'Deskripsyon jenere (mòd demo)');
+}
+async function aiGenerateTags(){
+  const seed = document.getElementById('apTitle').value || document.getElementById('apSeed').value || 'pwodwi';
+  const demo = '#premium #digital #zhuomarket #' + seed.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,14);
+  const r = await zhuoCore('tag-generator', `Bay 5 hashtag kout (san eksplikasyon) pou pwodwi: "${seed}"`, demo);
+  document.getElementById('apTags').textContent = r.text.trim();
+}
+function adminSaveProduct(){
+  const title = document.getElementById('apTitle').value.trim();
+  const price = parseFloat(document.getElementById('apPrice').value) || 0;
+  const desc = document.getElementById('apDesc').value.trim();
+  if(!title || !price){ toast('⛔','Mete yon tit ak yon pri'); return; }
+  const id = 'p'+(PRODUCTS.length+1)+'_'+Date.now().toString(36);
+  PRODUCTS.push({id, title, cat:'config', seller:'s1', price, rating:5.0, reviews:0, downloads:0, icon:'✨', desc: desc || 'Deskripsyon ap vini.'});
+  closeSheet('apOverlay'); renderAdmin(); renderMarket();
+  toast('✅','Pwodwi anrejistre ak siksè');
+}
+function adminEditProduct(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;const title=prompt('Tit pwodwi',p.title);if(title===null)return;const price=prompt('Pri USD',p.price);if(price===null)return;const num=parseFloat(price);if(!title.trim()||!Number.isFinite(num)||num<0){toast('⛔','Done yo pa valab');return;}p.title=title.trim();p.price=num;renderAdmin();renderMarket();renderHome();toast('✅','Pwodwi modifye ak siksè');}
+function adminDeleteProduct(id){ PRODUCTS = PRODUCTS.filter(p=>p.id!==id); renderAdmin(); renderMarket(); toast('🗑️','Pwodwi retire'); }
+function adminBanUser(i){ ADMIN_USERS[i].status='banned'; renderAdmin(); toast('🚫','Itilizatè bloke'); }
+function adminToggleCoupon(i){ ADMIN_COUPONS[i].active = !ADMIN_COUPONS[i].active; renderAdmin(); toast('🏷️','Estati koupon chanje'); }
+function adminAddCoupon(){ ADMIN_COUPONS.unshift({code:'NEW'+Math.floor(Math.random()*900),discount:'15%',uses:0,active:true}); renderAdmin(); toast('🎉','Nouvo koupon kreye'); }
+function adminSetRate(){
+  const val = prompt('Nouvo taux echanj (1 USD = ? HTG)', EXCHANGE_RATE_HTG);
+  if(val===null) return;
+  const num = parseFloat(val);
+  if(isNaN(num) || num<=0){ toast('⛔','Antre yon nimewo valab'); return; }
+  EXCHANGE_RATE_HTG = num;
+  document.getElementById('rateDisplay').textContent = num;
+  toast('💱', `Taux echanj mete ajou: 1$ = ${num} HTG`);
+}
+
+/* ---------------- MISC ---------------- */
+function toggleDark(){ toast('🌙','Aplikasyon an deja nan mòd fènwa premium'); }
+
+function renderAll(){
+  renderHome(); renderSubscriptions(); renderMarket(); renderCart(); renderNotifs(); renderNotifDot(); renderProfile(); applyPrefs();
+}
+
+</script>
+
+<script>
+/* Never use bundled demo catalog/state in production. Backend is authoritative. */
+PRODUCTS=[]; ORDERS=[]; DOWNLOADS=[]; WISHLIST=[]; NOTIFS=[]; CART=[]; TICKETS=[];
+/* ================================================================
+   ZHUO MARKET — PRODUCTION API BRIDGE
+   No demo data. The app talks to the backend served from the same origin.
+================================================================ */
+const ZHUO_API = `${window.location.origin}/api`;
+const ZHUO_TOKEN_KEY = 'zhuo_access_token';
+const ZHUO_USER_KEY = 'zhuo_user';
+
+async function api(path, options={}){
+  const headers = {'Content-Type':'application/json', ...(options.headers||{})};
+  const token = localStorage.getItem(ZHUO_TOKEN_KEY);
+  if(token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${ZHUO_API}${path}`, {...options, headers});
+  let data=null; try{ data=await res.json(); }catch(e){}
+  if(!res.ok){ const err=new Error(data?.error||`HTTP_${res.status}`); err.status=res.status; err.data=data; throw err; }
+  return data;
+}
+function initialsFor(name='User'){
+  return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('') || 'US';
+}
+function mapProduct(p){
+  return {...p, desc:p.description||p.desc||'', seller:p.seller||null, downloads:Number(p.downloads||0), reviews:Number(p.reviews||0), rating:Number(p.rating||0)};
+}
+async function loadPublicCatalog(){
+  const [cats, products] = await Promise.all([api('/categories'), api('/products')]);
+  CATS.length=0; cats.categories.forEach(c=>CATS.push(c));
+  Object.keys(catMap).forEach(k=>delete catMap[k]);
+  CATS.forEach(c=>catMap[c.id]=c);
+  PRODUCTS = products.products.map(mapProduct);
+  SELLERS.length=0;
+  const seen={}; PRODUCTS.forEach(p=>{ if(p.seller && !seen[p.seller]){seen[p.seller]={id:p.seller,name:p.sellerName||'Seller',initials:p.sellerInitials||initialsFor(p.sellerName||'Seller'),verified:!!p.sellerVerified,rating:p.rating||0};}});
+  Object.values(seen).forEach(x=>SELLERS.push(x));
+  Object.keys(sellerMap).forEach(k=>delete sellerMap[k]);
+  SELLERS.forEach(x=>sellerMap[x.id]=x);
+}
+async function loadPrivateData(){
+  if(!localStorage.getItem(ZHUO_TOKEN_KEY)) return;
+  const [me, ns, ws, os, ds] = await Promise.all([
+    api('/me'), api('/notifications'), api('/wishlist'), api('/orders'), api('/downloads')
+  ]);
+  state.user = {...me.user, initials:initialsFor(me.user.name), isAdmin:false};
+  NOTIFS = ns.notifications || [];
+  WISHLIST = (ws.items||[]).map(p=>p.id);
+  ORDERS = (os.orders || []).map(o=>({...o, product:o.productId||o.product, price:Number(o.amount??o.price??0), date:o.created_at||o.date||'Jodi a'}));
+  DOWNLOADS = (ds.downloads || []).map(d=>({...d, product:d.productId||d.product, date:d.created_at||d.date||'Jodi a'}));
+  CART = [];
+}
+async function syncAppData(){
+  await loadPublicCatalog();
+  if(localStorage.getItem(ZHUO_TOKEN_KEY)) await loadPrivateData();
+}
+function saveAuthSession(user, token){
+  localStorage.setItem(ZHUO_TOKEN_KEY, token);
+  localStorage.setItem(ZHUO_USER_KEY, JSON.stringify(user));
+}
+function clearAuthSession(){
+  localStorage.removeItem(ZHUO_TOKEN_KEY); localStorage.removeItem(ZHUO_USER_KEY);
+}
+function setLoggedUser(user){
+  state.user={...user, initials:initialsFor(user.name), isAdmin:false};
+  const pn=document.getElementById('profileName'); if(pn) pn.textContent=state.user.name;
+  const pa=document.getElementById('profileAvatar'); if(pa) pa.textContent=state.user.initials;
+  const mn=document.getElementById('miniProfileName'); if(mn) mn.textContent=state.user.name;
+  const ma=document.getElementById('miniProfileAvatar'); if(ma) ma.textContent=state.user.initials;
+}
+
+async function login(){
+  const email=(document.getElementById('loginEmail')?.value||'').trim();
+  const password=document.getElementById('loginPass')?.value||'';
+  if(!email||!password){toast('⚠️','Antre imèl ak modpas ou.');return;}
+  try{
+    const r=await api('/auth/login',{method:'POST',body:JSON.stringify({email,password})});
+    saveAuthSession(r.user,r.token); setLoggedUser(r.user);
+    if(isRememberChecked()) saveSession(r.user); else clearSession();
+    await syncAppData(); enterApp(); toast('✅','Koneksyon reyisi.');
+  }catch(e){toast('❌',e.status===401?'Imèl oswa modpas pa kòrèk.':'Sèvè a pa disponib kounye a.');}
+}
+async function register(){
+  const name=(document.getElementById('registerName')?.value||document.getElementById('regName')?.value||'').trim();
+  const email=(document.getElementById('registerEmail')?.value||document.getElementById('regEmail')?.value||'').trim();
+  const password=(document.getElementById('registerPass')?.value||document.getElementById('regPass')?.value||'');
+  if(!name||!email||password.length<6){toast('⚠️','Non, imèl ak yon modpas 6 karaktè minimòm obligatwa.');return;}
+  try{
+    const r=await api('/auth/register',{method:'POST',body:JSON.stringify({name,email,password})});
+    saveAuthSession(r.user,r.token); setLoggedUser(r.user);
+    if(isRememberChecked()) saveSession(r.user); else clearSession();
+    await syncAppData(); enterApp(); toast('🎉','Kont ou kreye avèk siksè.');
+  }catch(e){toast('❌',e.status===409?'Imèl sa deja itilize.':'Kreyasyon kont lan echwe.');}
+}
+function sendReset(){toast('ℹ️','Fonksyon reset modpas la bezwen yon endpoint email sou backend lan.');}
+function googleLogin(){toast('ℹ️','Google Login poko aktive sou backend lan.');}
+async function logout(){
+  clearAuthSession(); clearSession(); state.user={name:'',initials:'',premium:false,isAdmin:false};
+  document.getElementById('app').style.display='none'; document.getElementById('auth-screen').style.display='flex'; setAuthTab('login');
+  toast('👋','Ou dekonekte.');
+}
+
+async function enterApp(){
+  document.getElementById('auth-screen').style.display='none'; document.getElementById('app').style.display='block';
+  const admin=document.getElementById('adminMenuItem'); if(admin) admin.remove();
+  setLoggedUser(state.user);
+  renderAll(); renderProfile();
+}
+function renderAll(){
+  try{renderHome();}catch(e){}
+  try{renderNotifs();renderNotifDot();}catch(e){}
+  try{renderProfile();}catch(e){}
+}
+
+async function openView(name){
+  const allowed=['home','notifications','profile','orders','downloads','wishlist','support'];
+  if(!allowed.includes(name)) name='home';
+  ['home','notifications','profile','orders','downloads','wishlist','support','admin'].forEach(v=>{
+    const el=document.getElementById('view-'+v); if(el) el.classList.toggle('hidden',v!==name);
+  });
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.nav===name));
+  window.scrollTo({top:0});
+  try{
+    if(name==='notifications'){ await loadPrivateData(); renderNotifs(); renderNotifDot(); if(localStorage.getItem(ZHUO_TOKEN_KEY)) await api('/notifications/read',{method:'POST'}); }
+    if(name==='orders'){ await loadPrivateData(); renderOrders(); }
+    if(name==='downloads'){ await loadPrivateData(); renderDownloads(); }
+    if(name==='wishlist'){ await loadPrivateData(); renderWishlist(); }
+  }catch(e){toast('❌','Pa kapab kontakte backend lan.');}
+}
+
+async function toggleWishlist(id){
+  if(!localStorage.getItem(ZHUO_TOKEN_KEY)){toast('🔐','Konekte pou sove Favoris.');return;}
+  try{ const r=await api(`/wishlist/${encodeURIComponent(id)}`,{method:'POST'}); if(r.saved) WISHLIST.push(id); else WISHLIST=WISHLIST.filter(x=>x!==id); renderHome(); if(document.getElementById('view-wishlist')&&!document.getElementById('view-wishlist').classList.contains('hidden')) renderWishlist(); toast(r.saved?'❤️':'🤍',r.saved?'Ajoute nan Favoris.':'Retire nan Favoris.'); }catch(e){toast('❌','Favoris pa disponib kounye a.');}
+}
+
+async function buyNow(id){
+  if(!localStorage.getItem(ZHUO_TOKEN_KEY)){toast('🔐','Konekte pou achte.');setAuthTab('login');return;}
+  const p=PRODUCTS.find(x=>x.id===id); if(!p)return;
+  checkoutItems=[{product:id,qty:1}]; selectedPay=enabledGateways()[0]?.id||'pending';
+  renderCheckoutSheet(); showSheet('coOverlay');
+}
+async function confirmPayment(){
+  if(!checkoutItems.length){toast('⚠️','Pa gen pwodwi pou peye.');return;}
+  if(!selectedPay){toast('⚠️','Chwazi yon metòd peman.');return;}
+  const btn=event?.target; if(btn){btn.disabled=true;btn.textContent='⏳ Ap kreye kòmand...';}
+  try{
+    const orders=[];
+    for(const item of checkoutItems){
+      const o=await api('/checkout',{method:'POST',body:JSON.stringify({productId:item.product,qty:item.qty,method:selectedPay})});
+      orders.push(o.order);
+    }
+    closeSheet('coOverlay');
+    CART=[]; await loadPrivateData(); renderNotifs(); renderNotifDot();
+    const first=orders[0]; toast('🧾',`Kòmand ${first.id} kreye. Estati: PENDING.`);
+    showReceipt(first.id, first.amount, `${first.amount} ${first.currency}`);
+  }catch(e){toast('❌','Kòmand lan pa t ka kreye.');}
+  finally{if(btn){btn.disabled=false;}}
+}
+function showReceipt(orderId,total,displayAmount){
+  const el=document.getElementById('rcContent'); if(!el)return;
+  el.innerHTML=`<div style="font-size:52px;margin:22px 0 6px;">🧾</div><h2 style="font-size:20px;margin-bottom:6px;">Kòmand kreye</h2><div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Peman an poko konfime. Estati kòmand lan rete PENDING jiskaske gateway la verifye li.</div><div class="card" style="padding:16px;text-align:left;margin-bottom:20px;"><div class="summary-row"><span>Kòmand ID</span><span style="font-weight:700;color:var(--text);">${orderId}</span></div><div class="summary-row"><span>Total</span><span style="font-weight:700;color:var(--text);">${displayAmount}</span></div><div class="summary-row"><span>Estati</span><span class="status-tag">PENDING</span></div></div><button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="closeSheet('rcOverlay');openView('orders')">📦 Gade kòmand</button><button class="btn btn-ghost" style="width:100%;" onclick="closeSheet('rcOverlay')">Fèmen</button>`;
+  showSheet('rcOverlay');
+}
+
+async function zhuoCore(feature,prompt,demoFallback){
+  try{const r=await api('/ai/chat',{method:'POST',body:JSON.stringify({feature,prompt})}); return r.text||'';}
+  catch(e){toast('⚠️','Zhuo AI pa disponib: configure provider AI a sou backend lan.');return '';}
+}
+
+async function bootProduction(){
+  try{
+    await loadPublicCatalog();
+    const remembered=loadSession();
+    const token=localStorage.getItem(ZHUO_TOKEN_KEY);
+    if(token){
+      try{await loadPrivateData(); enterApp();return;}catch(e){clearAuthSession();}
+    }
+    document.getElementById('auth-screen').style.display='flex';
+  }catch(e){
+    document.getElementById('auth-screen').style.display='flex';
+    toast('❌','Backend pa reponn. Deploy backend lan anvan ou louvri app la.');
+  }
+}
+window.addEventListener('load',()=>setTimeout(bootProduction,1300));
+</script>
+
+</body>
+</html>
